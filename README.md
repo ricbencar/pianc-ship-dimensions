@@ -24,7 +24,7 @@ The estimators are built upon two authoritative PIANC datasets, which represent 
 
 For all numeric parameters, the scripts employ the **Piecewise Cubic Hermite Interpolating Polynomial (PCHIP)** method from the `scipy.interpolate` library.
 
-This method is critically important for this application due to its **shape-preserving (monotonicity) properties**. In the context of ship dimensions, this ensures that the physical relationships present in the source data are maintained. For example, if the PIANC data shows that a ship's Length Overall (LoA) strictly increases with Deadweight Tonnage (DWT), the PCHIP interpolator guarantees the interpolated values will also follow this trend. This avoids the non-physical "overshoots" and oscillations that can be produced by other methods, such as standard cubic splines, thereby ensuring the plausibility of the engineering estimates.
+This method is critically important for this application due to its **shape-preserving (monotonicity) properties**. In the context of ship dimensions, this ensures that the physical relationships present in the source data are maintained. For example, if the PIANC data shows that a ship's Length Overall (Loa) strictly increases with Deadweight Tonnage (DWT), the PCHIP interpolator guarantees the interpolated values will also follow this trend. This avoids the non-physical "overshoots" and oscillations that can be produced by other methods, such as standard cubic splines, thereby ensuring the plausibility of the engineering estimates.
 
 ### 2.3. Handling of Non-Numeric Data
 
