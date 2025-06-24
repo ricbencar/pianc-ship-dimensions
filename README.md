@@ -9,7 +9,7 @@ The primary function of the scripts is to interpolate a comprehensive set of ves
 The repository includes:
 * **`pianc-ship-dimensions.py`**: A command-line interface (CLI) tool for interactive calculations and integration into automated workflows.
 * **`pianc-ship-dimensions-gui.py`**: A graphical user interface (GUI) tool built with Tkinter for more accessible, visually-driven analysis.
-
+![figure](https://github.com/user-attachments/assets/391bd3e6-a9fb-440a-ba08-abac20213ad2)
 ## 2. Core Technology and Methodology
 
 ### 2.1. Data Sources
