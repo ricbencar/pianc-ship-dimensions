@@ -1,0 +1,186 @@
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (t);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Crude Oil & Larger Product Tankers;Coastal/Panamax;60000;75000;56400;214;207;32.2;12.3;0.915;229;219;32.2;12.8;18.5;47;2200;3600;800;1050
+Crude Oil & Larger Product Tankers;Coastal/Panamax;70000;83000;65800;228;219;32.2;13.6;0.865;236;229;36;13.7;19.8;50;2350;3900;850;1100
+Crude Oil & Larger Product Tankers;Aframax;100000;120000;95000;248;238;43;13.5;0.869;253;242;45.7;14.7;19.8;50;2750;4600;930;1250
+Crude Oil & Larger Product Tankers;Aframax;115000;135000;109250;250;239;44;14.8;0.867;256;249;44;15.7;21;50;2900;5000;970;1300
+Crude Oil & Larger Product Tankers;Suezmax;150000;177000;142500;274;264;50;16;0.838;274;264;50;17.6;23.2;50;3300;5500;1030;1450
+Crude Oil & Larger Product Tankers;VLCC;165000;190000;158400;274;264;50;17.1;0.842;281;270;50;17.3;23.1;50;3400;5800;1050;1500
+Crude Oil & Larger Product Tankers;VLCC;193000;230000;185280;288;274;50;19.6;0.857;288;274;50;19.6;28;61;3700;6300;1100;1650
+Crude Oil & Larger Product Tankers;VLCC;280000;325000;268800;333;319;60;20.4;0.832;336;330;60;20.5;28.8;61;4400;7800;1270;1900
+Crude Oil & Larger Product Tankers;VLCC;300000;350000;291000;333;316;60;21.6;0.855;339;330;60;22.7;29.7;64;4600;8100;1300;1950
+Crude Oil & Larger Product Tankers;VLCC;320000;370000;310400;333;320;60;22.6;0.853;340;327;60;22.6;30.5;64;4700;8300;1320;2000
+Crude Oil & Larger Product Tankers;ULCC;450000;510000;436500;380;366;68;24.5;0.836;380;366;68;24.5;34;64;5500;10000;1400;2250
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (t);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Product, Chemical and Dual Product Tankers (small/medium);General Purpose;3000;4500;2700;89;82;13;5.5;0.768;98;96;16.6;6.1;6.5;28;400;600;230;260
+Product, Chemical and Dual Product Tankers (small/medium);General Purpose;5000;8500;4500;105;99;16;6.4;0.838;139;132;22.5;7;8.3;32;500;900;250;300
+Product, Chemical and Dual Product Tankers (small/medium);General Purpose;10000;15000;9200;120;115;20;7.8;0.836;142;133;21;8.8;11.6;45;900;1500;320;400
+Product, Chemical and Dual Product Tankers (small/medium);General Purpose;20000;26000;18500;164;154;23;8.5;0.864;169;158;27.9;10;12.7;45;1400;2000;400;570
+Product, Chemical and Dual Product Tankers (small/medium);Medium Range 1;30000;38000;28000;177;168;29;9.5;0.821;180;173;31;11.4;14;45;1800;2700;570;750
+Product, Chemical and Dual Product Tankers (small/medium);Medium Range 1;40000;52000;37500;182;174;32.2;11;0.844;188;180;32.2;12.2;17.3;45;1950;3000;680;870
+Product, Chemical and Dual Product Tankers (small/medium);Medium Range 2;50000;62500;47000;183;175;32.2;12.9;0.86;189;180;32.2;13.5;18.4;47;2050;3250;770;950
+Product, Chemical and Dual Product Tankers (small/medium);Long Range 1;75000;91000;70500;229;220;32.2;14.7;0.874;229;221;40;14.7;20.8;48;2400;3950;860;1130
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (t);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Product, Chemical and Dual Product Tankers (medium/large);Small Chemical Tanker;5000;7000;4450;96;90;16;6;0.81;107;100;17;6.5;7.7;32;600;900;200;250
+Product, Chemical and Dual Product Tankers (medium/large);Handy size;10000;14000;8900;114;107;19.4;8;0.843;134;126;22.6;8.2;10.4;35;1400;1800;400;470
+Product, Chemical and Dual Product Tankers (medium/large);Handy size;20000;26000;18200;155;144;23.7;9.2;0.828;166;156;25;9.9;13;39;1600;2300;460;550
+Product, Chemical and Dual Product Tankers (medium/large);Handy size;30000;39000;27900;179;170;28;9.8;0.836;190;183;30;11.5;14;43;1700;2700;520;650
+Product, Chemical and Dual Product Tankers (medium/large);Handymax;40000;50000;37200;180;177;30;10.7;0.88;200;190;32;11.6;15;45;1850;3000;550;750
+Product, Chemical and Dual Product Tankers (medium/large);Handymax;50000;62000;47000;190;182;32.2;12;0.882;200;195;32.2;12.9;17;45;1900;3300;600;850
+Product, Chemical and Dual Product Tankers (medium/large);Supramax;60000;72000;56400;200;195;32.2;13;0.882;200;196;32.2;13.1;18.6;48;2000;3500;650;900
+Product, Chemical and Dual Product Tankers (medium/large);Panamax;70000;80000;65800;225;215;32.2;13.3;0.869;230;220;32.2;13.5;18.5;48;2100;3800;700;950
+Product, Chemical and Dual Product Tankers (medium/large);Panamax;80000;95000;76000;229;222;32.2;14.5;0.917;229;226;32.2;14.7;20.1;49;2150;4000;730;1000
+Product, Chemical and Dual Product Tankers (medium/large);Post-Panamax;85000;95000;80750;229;225;38;13.5;0.823;235;229;40;14.6;19.1;49;2300;4100;750;1050
+Product, Chemical and Dual Product Tankers (medium/large);Post-Panamax (wide);100000;120000;95000;250;245;43;13.2;0.863;250;245;43;14.6;18.5;50;2500;4550;800;1100
+Product, Chemical and Dual Product Tankers (medium/large);Post-Panamax (narrow);100000;110000;95000;240;236;38;14.5;0.846;240;236;38;14.6;20;50;2400;4550;700;1000
+Product, Chemical and Dual Product Tankers (medium/large);Mini Cape;120000;140000;114000;260;254;43;14.5;0.884;260;254;43;15.6;20.3;50;2600;4800;850;1250
+Product, Chemical and Dual Product Tankers (medium/large);Small Cape;150000;172000;142500;273;260;43;17.4;0.884;273;265;46;17.6;23.9;51;2850;5850;930;1400
+Product, Chemical and Dual Product Tankers (medium/large);Cape;170000;195000;163200;291;279;45;17.8;0.873;291;280;47;18.5;24.2;54;3000;6300;1000;1500
+Product, Chemical and Dual Product Tankers (medium/large);Cape;185000;215000;177600;290;280;47;18;0.908;300;294;47.5;18.5;24.4;54;3150;6500;1050;1600
+Product, Chemical and Dual Product Tankers (medium/large);Cape;200000;230000;192000;300;290;50;18;0.881;300;294;50;18.4;24.1;54;3350;6800;1100;1680
+Product, Chemical and Dual Product Tankers (medium/large);Large cape;230000;260000;220800;325;315;52.5;18.2;0.864;325;315;58;19.2;24.3;58;3600;7200;1200;1800
+Product, Chemical and Dual Product Tankers (medium/large);VLOC;250000;290000;240000;330;321;57;18.1;0.876;325;321;58;19.2;25.1;58;3750;7600;1250;1900
+Product, Chemical and Dual Product Tankers (medium/large);VLOC;300000;340000;288000;327;318;55;21.6;0.9;330;328;60;22.2;29.3;63;4000;8500;1350;2100
+Product, Chemical and Dual Product Tankers (medium/large);VLOC;325000;380000;312000;333;327;60;22.7;0.853;340;327;60;23;29.8;63;4300;8700;1400;2200
+Product, Chemical and Dual Product Tankers (medium/large);Valemax;400000;450000;384000;360;353;65;23;0.853;362;355;65;23.2;30.4;63;4400;9700;1450;2400
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (m3);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+LNG Carriers;Combination Gas/LPG;10000;16500;16500;137;127;19.8;8.3;0.791;137;127;19.8;8.3;11.5;38;1850;2200;400;450
+LNG Carriers;LNG Small;11000;20000;19000;151;140;28;7.7;0.663;156;146;28;8.2;16;45;2300;2500;450;500
+LNG Carriers;Combination Gas/LPG;20000;32000;30000;180;171;26.6;9.4;0.748;180;171;26.6;9.4;17.8;43;3200;3500;765;825
+LNG Carriers;LNG Conventional;40000;58000;75000;220;211;35;10;0.785;220;211;35;10;22.5;59;4100;4500;1080;1150
+LNG Carriers;LNG Conventional;70000;105000;130000;274;260;47.2;11.8;0.725;298;283;47.2;12;26.5;68;6400;7000;1400;1500
+LNG Carriers;LNG Conventional;80000;114000;145000;289;274;48;12.3;0.705;300;285;49;12.5;26.5;68;6800;7500;1500;1600
+LNG Carriers;LNG New Panamax;90000;125000;160000;289;275;45.6;12.5;0.797;300;292;48.9;13;26;68;7300;8000;1550;1700
+LNG Carriers;LNG New Panamax;98000;135000;175000;296;284;46.4;12.8;0.8;300;294;50;13;26.5;68;7600;8400;1650;1800
+LNG Carriers;LNG-Qflex;107000;150000;211000;315;303;50;12.5;0.792;315;303;50;12;27;58;8000;8800;1750;1900
+LNG Carriers;LNG-Qflex;120000;165000;216000;315;304;50;13.6;0.798;315;304;50;13.6;27;58;8200;9050;1800;1950
+LNG Carriers;LNG-QMax;130000;179000;261000;345;332;53.8;12.2;0.821;345;332;53.8;12.2;27;58;8300;9200;1850;2000
+LNG Carriers;LNG-QMax;155000;206000;267000;345;333;55;13.7;0.821;345;333;55;13.7;27;58;8400;9400;1950;2100
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (m3);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+LPG Carriers;Small Gas Carrier;1000;2000;1500;65;60;11;4.2;0.722;70;65;12.4;4.5;5.1;24;600;650;230;240
+LPG Carriers;Small Gas Carrier;3000;5200;3500;96;90;16.4;4.5;0.783;102;95;16.8;6.8;7.2;32;800;850;290;300
+LPG Carriers;Small Gas Carrier;5000;8800;6000;106;100;17.6;5.8;0.862;122;115;20;7.1;8.1;41;950;1050;340;360
+LPG Carriers;Small Gas Carrier;10000;16000;12000;120;112;19.8;8.8;0.82;146;138;21.6;8.8;11.2;41;1350;1550;450;480
+LPG Carriers;Handysize Gas Carrier;22000;33000;22000;160;152;25.6;10.9;0.778;170;161;26.6;11.4;16.4;47;2200;2500;670;720
+LPG Carriers;Medium Gas Carrier (MGC);30000;42000;37000;182;172;29.4;10.4;0.799;196;186;30;11.6;18;55;2650;3000;770;820
+LPG Carriers;Large Gas Carrier (LGC);43000;60000;59000;205;195;32.2;11.9;0.803;205;195;33.2;12.6;20.8;55;3100;3550;860;930
+LPG Carriers;Very Large Gas Carrier (VLGC);50000;69000;73000;230;219;36.6;10.9;0.79;230;223;36.6;12.1;20.4;55;3300;3750;920;980
+LPG Carriers;Very Large Gas Carrier (VLGC);64000;85000;90000;228;217;36;13.6;0.8;230;225;36.6;13.6;22.6;55;3550;4100;960;1050
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (TEU);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Container Ships (Post-Panamax);Post-Panamax;52000;72000;4300;228;218;37.3;12.5;0.708;267;250;37.3;12.8;19.3;54;6100;7400;1000;1150
+Container Ships (Post-Panamax);Post-Panamax;60000;82000;5200;249;235;37.4;13.5;0.691;255;242;37.4;13.5;22.1;54;6700;8200;1250;1500
+Container Ships (Post-Panamax);Post-Panamax;65000;88000;5500;255;244;37.3;13.9;0.696;272;261;40;14;22;55;7100;8700;1400;1570
+Container Ships (Post-Panamax);Post-Panamax;70000;96000;6000;280;266;40.3;14;0.64;285;271;40.3;14.5;24.1;57;7500;9200;1450;1650
+Container Ships (Post-Panamax);Post-Panamax;80000;108000;6800;304;292;40;14;0.66;306;293;43.4;14.6;24.2;57;8200;10000;1550;1800
+Container Ships (Post-Panamax);Post-Panamax;90000;123000;8500;316;302;45.6;14.5;0.616;320;304;46;15;25;57;9100;11000;1650;1900
+Container Ships (Post-Panamax);Post-Panamax;100000;136000;8700;334;319;42.8;14.5;0.687;340;325;45.8;15;24.6;59;10000;12000;1750;2000
+Container Ships (Post-Panamax);Post-Panamax;110000;145000;9000;300;286;48.2;14.5;0.725;353;337;48.2;15;24.6;59;10900;12900;1880;2150
+Container Ships (Post-Panamax);Post-Panamax;120000;160000;10000;337;321;48.2;15.5;0.667;350;334;48.6;16;27.2;62;11700;13700;2000;2300
+Container Ships (Post-Panamax);Post-Panamax;130000;172000;11500;348;331;45.2;15.5;0.742;363;348;48.2;16;29.7;62;12200;14700;2150;2450
+Container Ships (Post-Panamax);Post-Panamax;150000;195000;14000;369;352;51;15.6;0.696;369;352;51;16.5;29.9;66;13700;15700;2350;2750
+Container Ships (Post-Panamax);Post-Panamax;165000;211000;15000;366;350;51.2;16;0.736;366;350;51.2;16;29.9;70;14400;16700;2550;2900
+Container Ships (Post-Panamax);Post-Panamax;185000;243000;19000;400;382;54;16;0.736;400;383;58.6;16;30.2;70;15000;17800;2700;3100
+Container Ships (Post-Panamax);Post-Panamax;200000;265000;20000;400;383;58.8;16;0.735;400;393;61.5;16.5;30.2;70;16500;19000;2900;3250
+Container Ships (Post-Panamax);Post-Panamax;225000;285000;23700;400;383;61;16.5;0.739;400;394;61.5;16.5;33.2;76;18000;20500;3200;3550
+Container Ships (Post-Panamax);Post-Panamax;240000;307000;24000;400;393;61.2;17;0.751;400;393;61.5;17;33.2;;19000;21500;3400;3750
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (TEU);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Container Ships (Panamax & smaller);Panamax & smaller;10000;15000;800;140;133;20.5;7.5;0.734;143;133;23;8;10.5;43;2500;3300;550;650
+Container Ships (Panamax & smaller);Panamax & smaller;15000;22000;1200;147;135;25;9;0.724;165;151;27.1;9.6;13.7;47;2800;3650;650;750
+Container Ships (Panamax & smaller);Panamax & smaller;20000;28000;1500;170;161;25;9.5;0.732;182;170;28;10.8;14.2;49;3000;4000;750;850
+Container Ships (Panamax & smaller);Panamax & smaller;25000;36000;2200;185;176;30;9.5;0.718;199;186;32.2;11;16.5;53;3500;4600;850;950
+Container Ships (Panamax & smaller);Panamax & smaller;30000;43000;2500;199;187;30.2;11.2;0.68;205;193;32.2;11.6;17.5;54;4000;5100;900;1000
+Container Ships (Panamax & smaller);Panamax & smaller;35000;46000;2800;210;199;30.2;11.5;0.666;226;212;32.2;12.8;16.7;54;4600;5700;950;1050
+Container Ships (Panamax & smaller);Panamax & smaller;40000;56000;3200;233;220;32.26;11.8;0.669;245;232;32.2;12.5;17.1;54;5100;6300;950;1100
+Container Ships (Panamax & smaller);Panamax & smaller;45000;62000;3500;247;232;32.26;12.3;0.673;272;243;32.2;12.5;19.3;54;5600;6700;1050;1200
+Container Ships (Panamax & smaller);Panamax & smaller;50000;68000;4200;261;249;32.26;12.6;0.672;282;266;32.2;13;19.3;54;6000;7100;1150;1300
+Container Ships (Panamax & smaller);Panamax & smaller;55000;72000;4500;261;249;32.26;13;0.689;294;281;32.2;13.5;19.3;54;6300;7600;1250;1400
+Container Ships (Panamax & smaller);Panamax & smaller;60000;83000;5000;275;262;32.26;13.5;0.727;292;277;32.2;13.5;21.5;54;6700;8200;1250;1500
+Container Ships (Panamax & smaller);Panamax & smaller;65000;88000;5000;294;283;32.26;13.5;0.714;294;283;32.2;13.7;21.8;55;7100;8700;1400;1570
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (GT);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+General Cargo Vessels;Mini Bulk Carrier;2500;4000;1750;80;73;13;5.2;0.811;95;90;18.3;6.8;8.5;27;290;470;170;200
+General Cargo Vessels;Mini Bulk Carrier;5000;7500;3500;101;95;16.2;6.4;0.761;139;135;16.9;7;8.2;46;450;680;260;300
+General Cargo Vessels;Mini Bulk Carrier;10000;17000;7500;111;102;19.2;8.5;1.021;152;141;23;9.3;13.5;50;580;1130;370;430
+General Cargo Vessels;Handysize;18000;29000;16000;157;148;22.8;10.3;0.834;169;160;25.6;10.4;14;60;850;1380;520;600
+General Cargo Vessels;Handysize;25000;35000;19000;175;166;26.5;10.3;0.772;190;187;28.2;10.5;14.3;60;1000;1650;620;720
+General Cargo Vessels;Handysize;30000;42500;23200;193;182;27.8;11.2;0.75;200;189;28;11.2;15.5;60;1100;1800;650;750
+General Cargo Vessels;Handysize;35000;47000;25000;188;177;27.7;11.3;0.848;192;180;28.4;11.4;15.5;60;1070;1770;650;750
+General Cargo Vessels;Handysize;38000;53000;26600;190;186;28.5;11;0.909;200;191;30.2;11.7;15.8;60;1150;1900;680;780
+General Cargo Vessels;Handymax;45000;57000;28200;185;176;32.2;12.1;0.831;185;176;32.2;12.1;17;60;1180;2000;750;880
+General Cargo Vessels;Supramax;50000;68000;37500;204;194;32.2;12.7;0.857;204;194;32.2;12.7;19;60;1300;2300;750;900
+General Cargo Vessels;Supramax;55000;68000;34900;190;187;32.2;12.9;0.875;190;187;32.2;12.9;18.5;60;1200;2200;750;880
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (GT);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Refrigerated Cargo;Coastal Reefer;500;1700;1000;67;61;11.5;4;0.606;67;61;11.5;4.5;6;25;250;400;130;160
+Refrigerated Cargo;Coastal Reefer;1000;3000;2500;85;76;13;4.3;0.706;85;76;13;4.9;6.5;28;320;530;170;200
+Refrigerated Cargo;Coastal Reefer;2000;3600;2500;89;81;12.5;5.3;0.671;97;87;14.2;5.8;6.8;30;260;440;160;190
+Refrigerated Cargo;Coastal Reefer;2500;5000;3500;92;79;18;4.2;0.837;108;100;18.6;5.4;7.9;33;430;700;250;290
+Refrigerated Cargo;Medium Reefer;5000;11000;4500;121;113;16.6;6.9;0.85;129;122;19;7.5;10;31;500;850;280;330
+Refrigerated Cargo;Medium Reefer;7500;13000;7000;134;127;20.2;7.1;0.714;146;138;20.8;8.9;10.3;40;600;1000;340;400
+Refrigerated Cargo;Medium Reefer;10000;17000;10500;152;139;23;8.7;0.611;154;145;24;9.3;13;43;900;1500;460;540
+Refrigerated Cargo;Medium Reefer;15000;25000;15000;145;136;23.6;10;0.779;185;175;25.2;10.3;15.7;43;1100;1850;560;660
+Refrigerated Cargo;Large Reefer;22000;38000;21500;190;180;30.7;10.5;0.655;190;180;30.7;10.5;15.5;43;1300;2200;710;830
+Refrigerated Cargo;Large Reefer;25000;45000;23750;211;197;32.26;9.8;0.723;238;230;36;9.8;13.5;45;1400;2300;780;910
+Refrigerated Cargo;Large Reefer;30000;53000;28500;236;222;36.2;9.8;0.673;236;222;36.2;10;13.9;48;1600;2650;870;1020
+Refrigerated Cargo;Large Reefer;45000;68000;42750;240;220;37.5;11.5;0.717;250;237;38.7;11.5;20;50;2200;3650;950;1110
+Refrigerated Cargo;Large Reefer;55000;90000;52250;296;287;37.6;11.5;0.725;296;287;37.6;11.5;23;55;2800;4650;950;1110
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;DWT_deadweight_tonnage (t) ;Displacement_fully_laden (t) ;Cargo_capacity (cars);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Car Carriers;Small PCTC;2500;6500;800;116;108;17.2;5.1;0.686;129;118;21.2;5.6;12;40;2300;2700;600;650
+Car Carriers;Small PCTC;5000;12000;2000;140;131;22.4;6.4;0.639;165;157;27.6;7.5;23;41;3800;4500;800;880
+Car Carriers;Small PCTC;7000;16000;2200;140;131;22.7;7.4;0.727;173;163;30.2;7.9;23.3;42;3800;4500;810;890
+Car Carriers;Medium PCTC;12000;27000;4800;183;170;31.5;9;0.56;183;171;32.2;9.1;31.8;43;6100;7200;1130;1240
+Car Carriers;Medium PCTC;15000;35000;5000;180;172;30;9.2;0.737;200;192;36.5;10;33.5;46;6500;7700;1080;1180
+Car Carriers;Large PCTC;18000;37000;6500;200;192;32.26;9.6;0.622;200;196;38;10;35.8;48;7500;8800;1220;1340
+Car Carriers;LCTC;20000;42000;7500;200;189;35.4;10;0.628;200;196;38;10.2;33;48;7000;8200;1270;1400
+Car Carriers;Large PCTC;20000;45000;6500;200;190;32.26;10;0.734;200;192;32.2;11;33.8;48;7100;8400;1220;1340
+Car Carriers;LCTC;25000;48000;8000;230;224;32.26;10.3;0.645;232;224;36.5;11;35.1;48;8000;9400;1220;1340
+Car Carriers;LCTC;30000;55000;8000;231;219;32.26;11.3;0.689;232;222;32.2;11.6;34.7;49;7900;9300;1220;1340
+Car Carriers;Large PCTC;40000;70000;9950;245;226;32.26;11.8;0.814;265;250;32.2;12.3;32.5;49;8000;9400;1220;1340
+Car Carriers;Large PCTC;50000;75000;10910;265;249;32.26;12.3;0.759;265;249;32.2;12.3;22;49;6300;7400;1220;1340
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;GT;Displacement_fully_laden (t) ;Cargo_capacity (passengers);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Ferries;Small Ro-Pax Ferry;200;330;50/500;43;38;8.3;2.1;0.498;57;42;15;3.7;3.3;12;200;220;60;65
+Ferries;Small Ro-Pax Ferry;400;660;150/600;49;42;11.5;2.5;0.547;52;46;12.9;4.7;4;15;300;340;90;100
+Ferries;Small Ro-Pax Ferry;700;1150;200/1,000;67;54;10.5;4.2;0.483;70;70;14.2;4.4;6.5;20;400;460;110;120
+Ferries;Medium Ro-Pax Ferry;1000;1700;400/2,000;66;58;10;3;0.977;83;72;20;3.9;4.1;15;350;400;100;110
+Ferries;Medium Ro-Pax Ferry;3000;5000;400/6,000;97;88;13.8;5.2;0.792;108;100;24;5.5;8.8;25;600;700;150;170
+Ferries;Large Ro-Pax Ferry;6000;5000;1,000/1,900;100;91;18;4.2;0.727;118;105;23.7;5.4;9.4;28;1000;1150;220;250
+Ferries;Large Ro-Pax Ferry;14000;11000;1,500/3,000;147;130;23.4;5.9;0.613;147;130;23.4;5.9;13.4;40;2000;2300;360;410
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;GT;Displacement_fully_laden (t) ;Cargo_capacity (passengers);Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Cruise Liners ;Boutique / Small Cruise Ship;1000;1000;50/200;84;73;11.9;4.1;0.281;84;73;13.5;4.7;5.2;58;1000;1050;200;210
+Cruise Liners ;Boutique / Small Cruise Ship;2500;3200;50/200;97;78;14.9;4.9;0.562;112;103;15.6;6.6;8.5;58;1500;1600;300;320
+Cruise Liners ;Boutique / Small Cruise Ship;5000;5000;50/350;100;90;16.2;4.7;0.73;136;122;20.5;6.9;7;65;1700;1800;350;370
+Cruise Liners ;Boutique / Small Cruise Ship;10000;9000;200/800;133;112;19;5;0.846;163;141;21.9;6.3;12.4;65;3300;3500;700;750
+Cruise Liners ;Boutique / Small Cruise Ship;15000;12000;200/800;156;134;22;5.9;0.69;187;156;26.5;7.6;16.3;66;3700;3900;750;800
+Cruise Liners ;Boutique / Small Cruise Ship;20000;15000;200/1,000;167;147;24;6.6;0.644;190;180;32;8.6;13.5;66;4200;4450;800;850
+Cruise Liners ;Mid-Size Cruise Ship;30000;20000;400/1,000;181;158;25.5;6;0.827;207;170;28.3;7.7;18.1;66;5200;5500;900;950
+Cruise Liners ;Mid-Size Cruise Ship;40000;26000;600/1,800;210;177;28;6.8;0.771;226;205;32.6;8.4;8.8;66;6000;6300;1030;1100
+Cruise Liners ;Mid-Size Cruise Ship;60000;35000;800/1,800;238;203;32.26;8.1;0.66;246;220;32.2;8.2;11;66;7700;8100;1230;1300
+Cruise Liners ;Large Cruise Ship;80000;45000;2,300/3,200;281;258;32.26;8;0.676;301;259;32.2;8.5;20.1;66;9200;9700;1450;1550
+Cruise Liners ;Large Cruise Ship;100000;54000;2,500/3,500;272;230;35.5;8.3;0.797;300;273;35.8;8.6;11.2;66;10800;11400;1650;1750
+Cruise Liners ;Large Cruise Ship;120000;64000;3,000/4,000;317;294;36.8;8.6;0.688;319;294;37.5;8.6;11.3;66;12100;12800;1870;1980
+Cruise Liners ;Large Cruise Ship;140000;74000;3,200/5.200;311;275;38.6;8.3;0.84;343;306;39.7;9.1;11.7;68;13500;14200;2100;2220
+Cruise Liners ;Mega Cruise Ship;170000;84000;5,000/5,700;339;312;41;8.8;0.746;348;320;43;8.9;12.1;70;14830;15600;2330;2470
+Cruise Liners ;Mega Cruise Ship;185000;87000;5,000/6,500;337;325;42;8.8;0.724;337;325;43;8.8;11.8;70;16610;17500;2645;2800
+Cruise Liners ;Mega Cruise Ship;225000;105000;5,000/6,500;362;331;47;9.3;0.726;362;331;47;9.3;22.6;70;17500;18500;2800;2960
+;;;;;;;;;;;;;;;;;;;
+Type;Class_name;GT;Displacement_fully_laden (t) ;Cargo_capacity;Loa_length_overall (m);Lbp_length_between_perpendiculars (m);B_beam (m);T_fully_laden (m);Cb_block_coefficient ();Loa_length_overall_max (m);Lbp_length_between_perpendiculars_max (m);B_beam_max (m);T_fully_laden_max (m);Moulded_depth (m);Air_draft_ballast (m);Lateral_windage_fully_loaded (m2);Lateral_windage_in_ballast (m2);Longitudinal_windage_fully_loaded (m2);Longitudinal_windage_in_ballast (m2)
+Fishing Vessels > 200 GT;Coastal Fishing Vessel;200;554;182;38;32;8.3;3.7;0.564;60;52;12.2;5.5;3.9;15;100;110;30;35
+Fishing Vessels > 200 GT;Coastal Fishing Vessel;250;482;158;44;35;7.5;3.2;0.574;52;47;15;5.2;4;18;120;140;30;35
+Fishing Vessels > 200 GT;Coastal Fishing Vessel;300;647;212;47;43;7.8;3.3;0.585;68;57;14.5;5;3.6;18;100;120;30;35
+Fishing Vessels > 200 GT;Coastal Fishing Vessel;400;910;298;55;50;9;3.4;0.595;71;59;12.3;6;4;20;120;150;35;40
+Fishing Vessels > 200 GT;Mid-Water Fishing Vessel;600;1458;478;54;46;10.4;5.1;0.598;71;61;15.7;6.3;7.1;25;220;260;70;80
+Fishing Vessels > 200 GT;Mid-Water Fishing Vessel;1000;1790;586;53;46;10.6;6.1;0.602;78;73;12.6;6.9;7;25;160;200;70;80
+Fishing Vessels > 200 GT;Mid-Water Fishing Vessel;1500;3019;989;65;60;13;6.4;0.605;85;75;15;7.9;8.3;30;240;300;90;100
+Fishing Vessels > 200 GT;Mid-Water Fishing Vessel;2000;3573;1171;75;70;13.5;6.2;0.61;108;95;15;8.4;6.5;30;160;200;90;100
+Fishing Vessels > 200 GT;Factory / Distant Water Trawler;3000;6000;1890;92;80;15.2;6.5;0.759;105;95;18;8.5;9.4;35;420;530;140;160
+Fishing Vessels > 200 GT;Factory / Distant Water Trawler;6000;11000;3465;114;107;17;6.9;0.876;129;118;21;8;10.2;40;560;700;170;190
+Fishing Vessels > 200 GT;Factory / Distant Water Trawler;9000;16000;5040;108;100;21;7.3;1.044;141;131;23;8;8.4;40;400;500;180;200
+Fishing Vessels > 200 GT;Factory / Distant Water Trawler;13000;21000;6615;153;142;22.3;9;0.737;155;142;24;9.6;13.6;45;950;1200;310;350
