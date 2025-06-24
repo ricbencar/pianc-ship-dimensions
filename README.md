@@ -198,5 +198,5 @@ The final `.exe` file will be located in the `dist` directory.
 
 ## 7. Technical Literature and Citations
 
-1.  **PIANC. (2022). *Ship Dimensions and Data for Design of Marine Infrastructure* (MarCom Working Group Report N° 235). PIANC General Secretariat.**
-2.  **PIANC. (2014). *Harbour Approach Channels – Design Guidelines* (MarCom Working Group Report N° 121). PIANC General Secretariat.**
+- **PIANC. (2022). *Ship Dimensions and Data for Design of Marine Infrastructure* (MarCom Working Group Report N° 235). PIANC General Secretariat.**
+- **PIANC. (2014). *Harbour Approach Channels – Design Guidelines* (MarCom Working Group Report N° 121). PIANC General Secretariat.**
