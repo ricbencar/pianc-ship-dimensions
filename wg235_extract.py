@@ -39,7 +39,7 @@ last_header_map = {} # To store the header order for each ship type block
 last_ship_type = None # To carry over the ship type for rows with an empty first column
 
 with open('wg235.csv', 'r', encoding='utf-8', errors='ignore') as f:
-    reader = csv.reader(f, delimiter=';')
+    reader = csv.reader(f, delimiter=',')
     for row in reader:
         # Skip rows that are completely empty or are comment/separator lines
         if not row or not any(field.strip() for field in row) or row[0].strip().startswith(';'):
