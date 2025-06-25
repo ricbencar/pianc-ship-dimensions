@@ -33,7 +33,7 @@ def wg121_extract(csv_file_path, output_file_path):
     try:
         # Use 'latin-1' encoding for broader compatibility with CSV files.
         with open(csv_file_path, mode='r', encoding='latin-1') as infile:
-            reader = csv.reader(infile, delimiter=';')
+            reader = csv.reader(infile, delimiter=',')
             
             # Read the header row. These are the parameter names in order.
             # We skip the first column, which is the ship type identifier.
