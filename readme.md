@@ -108,7 +108,7 @@ pip install pandas numpy scipy pyinstaller
 **Step 3: Generate the Initial .spec File**
 Run a basic PyInstaller command to create a `.spec` file, which is a build recipe.
 ```bash
-pyinstaller --noconsole --onefile pianc-ship-dimensions-gui.py
+pyinstaller pianc-ship-dimensions-gui.spec
 ```
 
 **Step 4: Modify the .spec File**
