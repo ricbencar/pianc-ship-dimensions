@@ -9,7 +9,7 @@ The primary function of the scripts is to interpolate a comprehensive set of ves
 The repository includes:
 * **`pianc-ship-dimensions.py`**: A command-line interface (CLI) tool for interactive calculations and integration into automated workflows.
 * **`pianc-ship-dimensions-gui.py`**: A graphical user interface (GUI) tool built with Tkinter for more accessible, visually-driven analysis.
-![figure](https://github.com/user-attachments/assets/391bd3e6-a9fb-440a-ba08-abac20213ad2)
+
 ## 2. Core Technology and Methodology
 
 ### 2.1. Data Sources
@@ -24,7 +24,7 @@ The estimators are built upon two authoritative PIANC datasets, which represent 
 
 For all numeric parameters, the scripts employ the **Piecewise Cubic Hermite Interpolating Polynomial (PCHIP)** method from the `scipy.interpolate` library.
 
-This method is critically important for this application due to its **shape-preserving (monotonicity) properties**. In the context of ship dimensions, this ensures that the physical relationships present in the source data are maintained. For example, if the PIANC data shows that a ship's Length Overall (Loa) strictly increases with Deadweight Tonnage (DWT), the PCHIP interpolator guarantees the interpolated values will also follow this trend. This avoids the non-physical "overshoots" and oscillations that can be produced by other methods, such as standard cubic splines, thereby ensuring the plausibility of the engineering estimates.
+This method is critically important for this application due to its **shape-preserving (monotonicity) properties**. In the context of ship dimensions, this ensures that the physical relationships present in the source data are maintained. For example, if the PIANC data shows that a ship's Length Overall (LoA) strictly increases with Deadweight Tonnage (DWT), the PCHIP interpolator guarantees the interpolated values will also follow this trend. This avoids the non-physical "overshoots" and oscillations that can be produced by other methods, such as standard cubic splines, thereby ensuring the plausibility of the engineering estimates.
 
 ### 2.3. Handling of Non-Numeric Data
 
@@ -108,7 +108,7 @@ pip install pandas numpy scipy pyinstaller
 **Step 3: Generate the Initial .spec File**
 Run a basic PyInstaller command to create a `.spec` file, which is a build recipe.
 ```bash
-pyinstaller --noconsole --onefile pianc-ship-dimensions-gui.py
+pyinstaller pianc-ship-dimensions-gui.spec
 ```
 
 **Step 4: Modify the .spec File**
@@ -198,5 +198,5 @@ The final `.exe` file will be located in the `dist` directory.
 
 ## 7. Technical Literature and Citations
 
-- PIANC. (2022). *Ship Dimensions and Data for Design of Marine Infrastructure* (MarCom Working Group Report N° 235). PIANC General Secretariat https://www.pianc.org/publication/ship-dimensions-and-data-for-design-of-marine-infrastructure/
-- PIANC. (2014). *Harbour Approach Channels – Design Guidelines* (MarCom Working Group Report N° 121). PIANC General Secretariat https://www.pianc.org/publication/harbour-approach-channels-design-guidelines/
+1.  **PIANC. (2022). *Ship Dimensions and Data for Design of Marine Infrastructure* (MarCom Working Group Report N° 235). PIANC General Secretariat.**
+2.  **PIANC. (2014). *Harbour Approach Channels – Design Guidelines* (MarCom Working Group Report N° 121). PIANC General Secretariat.**

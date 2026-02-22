@@ -1,19 +1,23 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['pianc-ship-dimensions-gui.py'],
     pathex=[],
     binaries=[],
     datas=[('wg121_database.txt', '.'), ('wg235_database.txt', '.')],
-    hiddenimports=['scipy.special', 'scipy.special._cdflib', 'scipy._lib.messagestream', 'scipy._cyutility'],
+    hiddenimports=[
+        'scipy.special',
+        'scipy.special._cdflib',
+        'scipy._lib.messagestream',
+        'scipy._cyutility'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
