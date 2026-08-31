@@ -1,0 +1,2631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#031426">
+  <meta name="description" content="Standalone PIANC vessel characteristics interpolator using WG235 and WG121 datasets.">
+  <title>PIANC Vessel Characteristics Calculator</title>
+  <style>
+    :root {
+      --navy-950: #020812;
+      --navy-925: #03101f;
+      --navy-900: #04172a;
+      --navy-850: #061e35;
+      --navy-800: #082943;
+      --navy-750: #0a3555;
+      --blue-600: #0b6fa4;
+      --blue-500: #1096d0;
+      --cyan-400: #4bd7ff;
+      --cyan-300: #7fe6ff;
+      --ice-100: #e9f8ff;
+      --ice-200: #c9e8f4;
+      --ice-300: #96bed0;
+      --muted: #7696a8;
+      --line: rgba(109, 205, 241, 0.16);
+      --line-strong: rgba(109, 205, 241, 0.31);
+      --glass: rgba(5, 28, 49, 0.82);
+      --glass-strong: rgba(5, 31, 54, 0.94);
+      --success: #6fe0b8;
+      --warning: #ffd27a;
+      --danger: #ff8e9a;
+      --shadow: 0 24px 70px rgba(0, 4, 12, 0.48);
+      --radius-xl: 26px;
+      --radius-lg: 18px;
+      --radius-md: 13px;
+      --radius-sm: 9px;
+      --focus: 0 0 0 3px rgba(75, 215, 255, 0.20);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--ice-100);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(15, 117, 166, 0.26), transparent 36rem),
+        radial-gradient(circle at 100% 22%, rgba(20, 81, 132, 0.22), transparent 33rem),
+        linear-gradient(155deg, var(--navy-950) 0%, var(--navy-925) 42%, #02101c 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.26;
+      background-image:
+        linear-gradient(rgba(98, 199, 235, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(98, 199, 235, 0.025) 1px, transparent 1px);
+      background-size: 38px 38px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    button,
+    select {
+      cursor: pointer;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    summary:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    ::selection {
+      color: #00101d;
+      background: var(--cyan-300);
+    }
+
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1480px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
+
+    .hero {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: center;
+      min-height: 150px;
+      padding: 28px 32px 31px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(102deg, rgba(6, 35, 59, 0.98), rgba(4, 19, 35, 0.94)),
+        radial-gradient(circle at 70% 50%, rgba(75, 215, 255, 0.16), transparent 30rem);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 54px;
+      opacity: 0.58;
+      background:
+        radial-gradient(42px 18px at 21px 36px, transparent 62%, rgba(50, 173, 222, 0.22) 64%, transparent 69%) 0 0 / 84px 42px repeat-x;
+      animation: wave-slide 13s linear infinite;
+    }
+
+    .heading-tape {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 13px;
+      border-bottom: 1px solid rgba(99, 204, 243, 0.12);
+      opacity: 0.9;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(96, 207, 247, 0.30) 0 1px,
+        transparent 1px 21px,
+        rgba(96, 207, 247, 0.17) 21px 22px,
+        transparent 22px 42px
+      );
+    }
+
+    .brand {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      flex: 0 0 auto;
+      width: 79px;
+      height: 79px;
+      padding: 13px;
+      border: 1px solid rgba(115, 222, 255, 0.28);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(15, 91, 131, 0.50), rgba(4, 25, 44, 0.92));
+      box-shadow: inset 0 0 28px rgba(67, 201, 246, 0.08), 0 14px 30px rgba(0, 7, 16, 0.34);
+    }
+
+    .eyebrow {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      margin-bottom: 6px;
+      color: var(--cyan-300);
+      font-size: 0.73rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 28px;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan-400));
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin-bottom: 7px;
+      font-size: clamp(1.65rem, 3.1vw, 2.8rem);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
+    }
+
+    .hero-subtitle {
+      max-width: 760px;
+      margin: 0;
+      color: var(--ice-300);
+      font-size: clamp(0.92rem, 1.5vw, 1.05rem);
+    }
+
+    .hero-status {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+      text-align: right;
+    }
+
+    .offline-badge {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 11px;
+      border: 1px solid rgba(111, 224, 184, 0.24);
+      border-radius: 999px;
+      color: var(--success);
+      background: rgba(41, 153, 114, 0.08);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .offline-badge::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 14px currentColor;
+    }
+
+    .database-stats {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(340px, 0.82fr) minmax(460px, 1.18fr);
+      gap: 22px;
+      margin-top: 22px;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(155deg, rgba(5, 30, 52, 0.92), rgba(3, 20, 37, 0.92));
+      box-shadow: 0 20px 48px rgba(0, 5, 15, 0.29);
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 180px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--cyan-400), transparent);
+      opacity: 0.68;
+    }
+
+    .control-panel {
+      padding: 24px;
+    }
+
+    .section-heading {
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+      margin-bottom: 23px;
+    }
+
+    .section-number {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      color: var(--cyan-300);
+      background: rgba(27, 126, 171, 0.10);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .section-heading h2 {
+      margin-bottom: 2px;
+      font-size: 1.1rem;
+      letter-spacing: -0.015em;
+    }
+
+    .section-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .field-group {
+      margin-bottom: 17px;
+    }
+
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 8px;
+      color: var(--ice-200);
+      font-size: 0.84rem;
+      font-weight: 720;
+    }
+
+    .field-hint {
+      color: var(--muted);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.70rem;
+      font-weight: 500;
+    }
+
+    .database-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-bottom: 19px;
+    }
+
+    .db-option {
+      position: relative;
+      min-height: 76px;
+      padding: 13px 13px 12px;
+      text-align: left;
+      border: 1px solid rgba(104, 198, 233, 0.14);
+      border-radius: var(--radius-md);
+      background: rgba(2, 16, 30, 0.55);
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .db-option:hover {
+      transform: translateY(-1px);
+      border-color: rgba(104, 198, 233, 0.30);
+      background: rgba(7, 43, 70, 0.66);
+    }
+
+    .db-option[aria-pressed="true"] {
+      border-color: rgba(75, 215, 255, 0.53);
+      background: linear-gradient(145deg, rgba(9, 78, 113, 0.52), rgba(4, 28, 49, 0.76));
+      box-shadow: inset 0 0 0 1px rgba(75, 215, 255, 0.10), 0 9px 24px rgba(0, 12, 25, 0.28);
+    }
+
+    .db-option[aria-pressed="true"]::after {
+      content: "";
+      position: absolute;
+      top: 11px;
+      right: 11px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan-400);
+      box-shadow: 0 0 12px rgba(75, 215, 255, 0.8);
+    }
+
+    .db-name {
+      display: block;
+      color: var(--ice-100);
+      font-size: 0.94rem;
+      font-weight: 800;
+    }
+
+    .db-year {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .select-wrap,
+    .input-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 16px;
+      width: 7px;
+      height: 7px;
+      pointer-events: none;
+      border-right: 2px solid var(--cyan-300);
+      border-bottom: 2px solid var(--cyan-300);
+      transform: translateY(-68%) rotate(45deg);
+    }
+
+    select,
+    input[type="number"],
+    input[type="search"] {
+      width: 100%;
+      min-height: 49px;
+      padding: 0 45px 0 14px;
+      color: var(--ice-100);
+      border: 1px solid rgba(104, 198, 233, 0.18);
+      border-radius: var(--radius-md);
+      outline: none;
+      background: rgba(2, 15, 28, 0.78);
+      transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+    }
+
+    input[type="number"] {
+      padding-right: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    select:hover,
+    input:hover {
+      border-color: rgba(104, 198, 233, 0.32);
+    }
+
+    select:focus,
+    input:focus {
+      border-color: rgba(75, 215, 255, 0.56);
+      background: rgba(3, 24, 43, 0.94);
+    }
+
+    select:disabled,
+    input:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    select {
+      appearance: none;
+      padding-right: 46px;
+    }
+
+    option {
+      color: var(--ice-100);
+      background: var(--navy-900);
+    }
+
+    .range-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 62px;
+      margin-top: 9px;
+      padding: 11px 13px;
+      border: 1px solid rgba(104, 198, 233, 0.12);
+      border-radius: 12px;
+      background: rgba(2, 15, 28, 0.50);
+    }
+
+    .range-card[hidden] {
+      display: none;
+    }
+
+    .range-title {
+      color: var(--muted);
+      font-size: 0.69rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .range-value {
+      display: block;
+      margin-top: 2px;
+      color: var(--ice-200);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ghost-button {
+      min-height: 35px;
+      padding: 0 11px;
+      border: 1px solid rgba(104, 198, 233, 0.17);
+      border-radius: 9px;
+      color: var(--cyan-300);
+      background: rgba(13, 91, 128, 0.10);
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .ghost-button:hover {
+      border-color: rgba(75, 215, 255, 0.40);
+      background: rgba(13, 91, 128, 0.22);
+    }
+
+    .message-box {
+      display: none;
+      gap: 10px;
+      align-items: flex-start;
+      margin: 14px 0 0;
+      padding: 11px 13px;
+      border: 1px solid rgba(255, 142, 154, 0.22);
+      border-radius: 11px;
+      color: #ffd9dd;
+      background: rgba(155, 45, 58, 0.10);
+      font-size: 0.80rem;
+    }
+
+    .message-box.visible {
+      display: flex;
+    }
+
+    .message-box.warning {
+      color: #ffe7b8;
+      border-color: rgba(255, 210, 122, 0.25);
+      background: rgba(157, 108, 20, 0.10);
+    }
+
+    .message-icon {
+      flex: 0 0 auto;
+      font-weight: 900;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 21px;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .tool-button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 9px;
+      min-height: 48px;
+      padding: 0 17px;
+      border-radius: 12px;
+      font-weight: 800;
+      transition: transform 160ms ease, border-color 160ms ease, filter 160ms ease, background 160ms ease;
+    }
+
+    .primary-button {
+      border: 1px solid rgba(105, 224, 255, 0.42);
+      color: #00111d;
+      background: linear-gradient(135deg, #6ce3ff, #159bd4 72%, #0b75aa);
+      box-shadow: 0 14px 30px rgba(14, 125, 174, 0.22);
+    }
+
+    .primary-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .primary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.42;
+      box-shadow: none;
+    }
+
+    .secondary-button,
+    .tool-button {
+      border: 1px solid rgba(104, 198, 233, 0.16);
+      color: var(--ice-200);
+      background: rgba(3, 21, 38, 0.76);
+    }
+
+    .secondary-button:hover,
+    .tool-button:hover {
+      border-color: rgba(75, 215, 255, 0.36);
+      color: var(--ice-100);
+      background: rgba(7, 49, 78, 0.70);
+    }
+
+    .button-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .visual-panel {
+      min-height: 576px;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 76% 12%, rgba(58, 191, 237, 0.15), transparent 24rem),
+        linear-gradient(155deg, rgba(5, 31, 54, 0.94), rgba(2, 17, 31, 0.95));
+    }
+
+    .visual-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .visual-header .section-heading {
+      margin-bottom: 0;
+    }
+
+    .source-chip {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      min-height: 32px;
+      padding: 0 10px;
+      border: 1px solid rgba(75, 215, 255, 0.18);
+      border-radius: 999px;
+      color: var(--cyan-300);
+      background: rgba(10, 78, 112, 0.13);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.72rem;
+      white-space: nowrap;
+    }
+
+    .ship-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 336px;
+      overflow: hidden;
+      border: 1px solid rgba(92, 188, 224, 0.13);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(69, 193, 236, 0.09), transparent 19rem),
+        linear-gradient(180deg, rgba(4, 24, 43, 0.72), rgba(2, 15, 28, 0.96));
+    }
+
+    .ship-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.48;
+      background:
+        linear-gradient(90deg, transparent 49.85%, rgba(86, 198, 239, 0.12) 50%, transparent 50.15%),
+        linear-gradient(transparent 49.85%, rgba(86, 198, 239, 0.07) 50%, transparent 50.15%);
+    }
+
+    .radar-rings {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(500px, 82%);
+      aspect-ratio: 1;
+      pointer-events: none;
+      border: 1px solid rgba(75, 215, 255, 0.06);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .radar-rings::before,
+    .radar-rings::after {
+      content: "";
+      position: absolute;
+      inset: 17%;
+      border: inherit;
+      border-radius: inherit;
+    }
+
+    .radar-rings::after {
+      inset: 34%;
+    }
+
+    .ship-svg {
+      position: relative;
+      z-index: 2;
+      width: min(95%, 830px);
+      height: auto;
+      filter: drop-shadow(0 24px 18px rgba(0, 2, 10, 0.44));
+    }
+
+    .ship-hull {
+      fill: url(#hullGradient);
+      stroke: rgba(126, 225, 255, 0.54);
+      stroke-width: 2;
+    }
+
+    .ship-detail {
+      fill: #113f5f;
+      stroke: rgba(120, 222, 255, 0.40);
+      stroke-width: 1.5;
+    }
+
+    .ship-window {
+      fill: #7fe6ff;
+      opacity: 0.78;
+    }
+
+    .ship-accent {
+      fill: #18a8dc;
+    }
+
+    .svg-line {
+      stroke: rgba(126, 225, 255, 0.62);
+      stroke-width: 1.5;
+      stroke-dasharray: 5 6;
+    }
+
+    .svg-label {
+      fill: #9ed8ea;
+      font-size: 14px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      letter-spacing: 0.04em;
+    }
+
+    .svg-water {
+      fill: none;
+      stroke: rgba(75, 215, 255, 0.32);
+      stroke-width: 2;
+      animation: water-pulse 4.5s ease-in-out infinite;
+    }
+
+    .vessel-placeholder {
+      position: absolute;
+      z-index: 3;
+      max-width: 340px;
+      padding: 16px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px solid rgba(104, 198, 233, 0.12);
+      border-radius: 13px;
+      background: rgba(2, 15, 28, 0.75);
+      backdrop-filter: blur(8px);
+      font-size: 0.86rem;
+    }
+
+    .vessel-placeholder[hidden] {
+      display: none;
+    }
+
+    .vessel-meta {
+      display: grid;
+      grid-template-columns: 1.25fr 0.75fr 0.75fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .meta-card {
+      min-height: 76px;
+      padding: 13px 14px;
+      border: 1px solid rgba(104, 198, 233, 0.11);
+      border-radius: 13px;
+      background: rgba(2, 16, 29, 0.53);
+    }
+
+    .meta-label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      display: block;
+      overflow: hidden;
+      color: var(--ice-200);
+      font-size: 0.86rem;
+      font-weight: 740;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .meta-value.mono {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .results-panel {
+      margin-top: 22px;
+      padding: 25px;
+    }
+
+    .results-panel[hidden],
+    .empty-panel[hidden] {
+      display: none;
+    }
+
+    .results-topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .results-title-wrap {
+      min-width: 0;
+    }
+
+    .result-kicker {
+      margin-bottom: 7px;
+      color: var(--cyan-300);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .results-title {
+      margin-bottom: 5px;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      line-height: 1.13;
+      letter-spacing: -0.035em;
+    }
+
+    .results-subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .class-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 35px;
+      max-width: 280px;
+      padding: 0 12px;
+      overflow: hidden;
+      border: 1px solid rgba(75, 215, 255, 0.21);
+      border-radius: 999px;
+      color: var(--cyan-300);
+      background: rgba(11, 111, 164, 0.10);
+      font-size: 0.76rem;
+      font-weight: 740;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 11px;
+      margin: 20px 0;
+    }
+
+    .summary-card {
+      position: relative;
+      min-height: 118px;
+      padding: 17px;
+      overflow: hidden;
+      border: 1px solid rgba(104, 198, 233, 0.13);
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(75, 215, 255, 0.10), transparent 8rem),
+        rgba(2, 17, 31, 0.62);
+    }
+
+    .summary-card::after {
+      content: "";
+      position: absolute;
+      right: -13px;
+      bottom: -13px;
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(75, 215, 255, 0.08);
+      border-radius: 50%;
+    }
+
+    .summary-label {
+      display: block;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.69rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      display: block;
+      color: var(--ice-100);
+      font-size: clamp(1.35rem, 2.1vw, 1.85rem);
+      font-weight: 820;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .summary-unit {
+      margin-left: 4px;
+      color: var(--cyan-300);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .results-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 17px;
+    }
+
+    .search-wrap {
+      position: relative;
+      max-width: 500px;
+    }
+
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      width: 17px;
+      height: 17px;
+      pointer-events: none;
+      color: var(--muted);
+      transform: translateY(-50%);
+    }
+
+    input[type="search"] {
+      min-height: 43px;
+      padding: 0 14px 0 42px;
+      font-size: 0.82rem;
+    }
+
+    input[type="search"]::-webkit-search-cancel-button {
+      filter: invert(1);
+    }
+
+    .tool-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .tool-button {
+      min-height: 41px;
+      padding: 0 12px;
+      font-size: 0.76rem;
+    }
+
+    .tool-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .result-groups {
+      display: grid;
+      gap: 11px;
+    }
+
+    .result-group {
+      overflow: hidden;
+      border: 1px solid rgba(104, 198, 233, 0.12);
+      border-radius: 15px;
+      background: rgba(2, 15, 28, 0.45);
+    }
+
+    .group-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      min-height: 51px;
+      padding: 0 16px;
+      text-align: left;
+      border: 0;
+      background: rgba(6, 37, 61, 0.46);
+    }
+
+    .group-toggle:hover {
+      background: rgba(8, 51, 82, 0.55);
+    }
+
+    .group-name {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      color: var(--ice-200);
+      font-size: 0.83rem;
+      font-weight: 800;
+    }
+
+    .group-count {
+      display: grid;
+      place-items: center;
+      min-width: 27px;
+      height: 23px;
+      padding: 0 7px;
+      border-radius: 999px;
+      color: var(--cyan-300);
+      background: rgba(75, 215, 255, 0.08);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.68rem;
+    }
+
+    .chevron {
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid var(--cyan-300);
+      border-bottom: 2px solid var(--cyan-300);
+      transform: rotate(45deg) translateY(-2px);
+      transition: transform 160ms ease;
+    }
+
+    .group-toggle[aria-expanded="false"] .chevron {
+      transform: rotate(-45deg);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      padding: 1px;
+      background: rgba(90, 184, 220, 0.07);
+    }
+
+    .result-grid.collapsed {
+      display: none;
+    }
+
+    .result-item {
+      min-width: 0;
+      min-height: 92px;
+      padding: 14px 15px;
+      background: rgba(3, 19, 34, 0.94);
+    }
+
+    .result-item.filtered-out {
+      display: none;
+    }
+
+    .result-label {
+      margin-bottom: 7px;
+      overflow-wrap: anywhere;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 720;
+    }
+
+    .result-value {
+      overflow-wrap: anywhere;
+      color: var(--ice-100);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 1.02rem;
+      font-weight: 760;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-value.textual {
+      color: var(--cyan-300);
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    .result-item.input-source {
+      box-shadow: inset 3px 0 0 var(--cyan-400);
+    }
+
+    .input-flag {
+      display: inline-block;
+      margin-left: 7px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      color: var(--cyan-300);
+      background: rgba(75, 215, 255, 0.08);
+      font-size: 0.60rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      vertical-align: 1px;
+    }
+
+    .no-filter-results {
+      display: none;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(104, 198, 233, 0.17);
+      border-radius: 14px;
+      font-size: 0.84rem;
+    }
+
+    .no-filter-results.visible {
+      display: block;
+    }
+
+    .raw-output {
+      margin-top: 14px;
+      border: 1px solid rgba(104, 198, 233, 0.11);
+      border-radius: 14px;
+      background: rgba(2, 14, 26, 0.62);
+    }
+
+    .raw-output summary {
+      padding: 13px 15px;
+      cursor: pointer;
+      color: var(--ice-300);
+      font-size: 0.78rem;
+      font-weight: 750;
+      list-style: none;
+    }
+
+    .raw-output summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .raw-output summary::before {
+      content: ">";
+      display: inline-block;
+      margin-right: 8px;
+      color: var(--cyan-300);
+      font-family: monospace;
+      transition: transform 140ms ease;
+    }
+
+    .raw-output[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    .raw-output pre {
+      max-height: 420px;
+      margin: 0;
+      padding: 15px;
+      overflow: auto;
+      color: #cceaf5;
+      border-top: 1px solid rgba(104, 198, 233, 0.09);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.76rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .empty-panel {
+      display: grid;
+      place-items: center;
+      min-height: 174px;
+      margin-top: 22px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .empty-content {
+      max-width: 650px;
+    }
+
+    .empty-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      border: 1px solid rgba(75, 215, 255, 0.20);
+      border-radius: 15px;
+      color: var(--cyan-300);
+      background: rgba(11, 111, 164, 0.09);
+    }
+
+    .empty-icon svg {
+      width: 27px;
+      height: 27px;
+    }
+
+    .empty-content h2 {
+      margin-bottom: 5px;
+      font-size: 1.05rem;
+    }
+
+    .empty-content p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .method-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .method-card {
+      min-height: 92px;
+      padding: 14px 15px;
+      border: 1px solid rgba(104, 198, 233, 0.10);
+      border-radius: 14px;
+      background: rgba(3, 21, 38, 0.54);
+    }
+
+    .method-index {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--cyan-300);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.67rem;
+      font-weight: 800;
+    }
+
+    .method-card strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ice-200);
+      font-size: 0.79rem;
+    }
+
+    .method-card span:last-child {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      margin-top: 18px;
+      padding: 0 4px;
+      color: #5f8093;
+      font-size: 0.70rem;
+    }
+
+    .footer-right {
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      font-family: "SFMono-Regular", Consolas, monospace;
+    }
+
+    .log-badge {
+      padding: 4px 8px;
+      border: 1px solid rgba(104, 198, 233, 0.10);
+      border-radius: 999px;
+      background: rgba(3, 21, 38, 0.48);
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 20;
+      right: 22px;
+      bottom: 22px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      max-width: min(420px, calc(100% - 44px));
+      padding: 13px 15px;
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid rgba(75, 215, 255, 0.24);
+      border-radius: 13px;
+      color: var(--ice-100);
+      background: rgba(4, 30, 50, 0.96);
+      box-shadow: 0 20px 50px rgba(0, 4, 12, 0.46);
+      transform: translateY(12px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      backdrop-filter: blur(15px);
+      font-size: 0.80rem;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    @keyframes wave-slide {
+      from { background-position-x: 0; }
+      to { background-position-x: 168px; }
+    }
+
+    @keyframes water-pulse {
+      0%, 100% { opacity: 0.52; transform: translateX(0); }
+      50% { opacity: 0.90; transform: translateX(8px); }
+    }
+
+    @media (max-width: 1040px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .visual-panel {
+        min-height: auto;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app-shell {
+        width: min(100% - 18px, 1480px);
+        padding-top: 9px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        padding: 24px 20px 29px;
+      }
+
+      .hero-status {
+        justify-items: start;
+        text-align: left;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .brand-mark {
+        width: 58px;
+        height: 58px;
+        padding: 9px;
+        border-radius: 17px;
+      }
+
+      .workspace {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .control-panel,
+      .visual-panel,
+      .results-panel {
+        padding: 18px;
+      }
+
+      .database-switch,
+      .vessel-meta,
+      .results-topbar,
+      .results-toolbar,
+      .method-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .source-chip,
+      .class-badge {
+        justify-self: start;
+      }
+
+      .ship-stage {
+        min-height: 270px;
+      }
+
+      .summary-grid,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tool-buttons {
+        justify-content: flex-start;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .brand-mark {
+        display: none;
+      }
+
+      .hero {
+        padding-inline: 17px;
+      }
+
+      .control-panel,
+      .visual-panel,
+      .results-panel {
+        padding: 15px;
+      }
+
+      .visual-header {
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    @media print {
+      body {
+        color: #111;
+        background: #fff;
+      }
+
+      body::before,
+      .hero,
+      .workspace,
+      .empty-panel,
+      .method-strip,
+      footer,
+      .results-toolbar,
+      .toast {
+        display: none !important;
+      }
+
+      .app-shell {
+        width: 100%;
+        padding: 0;
+      }
+
+      .results-panel {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        color: #111;
+        background: #fff;
+        box-shadow: none;
+      }
+
+      .results-topbar {
+        border-bottom-color: #bbb;
+      }
+
+      .results-title,
+      .summary-value,
+      .result-value,
+      .result-label,
+      .group-name {
+        color: #111 !important;
+      }
+
+      .summary-card,
+      .result-group,
+      .result-item,
+      .group-toggle {
+        color: #111;
+        border-color: #ccc;
+        background: #fff;
+        break-inside: avoid;
+      }
+
+      .result-grid {
+        background: #ddd;
+      }
+
+      .raw-output {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="heading-tape" aria-hidden="true"></div>
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#80e7ff"/>
+              <stop offset="1" stop-color="#1192c9"/>
+            </linearGradient>
+          </defs>
+          <path d="M8 42h48l-6 9H17z" fill="none" stroke="url(#brandGradient)" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M19 42l5-14h23l5 14M32 28V14m0 0 10 8H32" fill="none" stroke="url(#brandGradient)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M7 56c7-4 11 4 18 0s11 4 18 0 10 3 14 0" fill="none" stroke="#80e7ff" stroke-width="2" stroke-linecap="round" opacity=".75"/>
+        </svg>
+        <div>
+          <div class="eyebrow">Marine design utility</div>
+          <h1>PIANC Vessel Characteristics Calculator</h1>
+          <p class="hero-subtitle">Estimate vessel dimensions, capacities and windage characteristics from PIANC WG235 and WG121 reference datasets.</p>
+        </div>
+      </div>
+      <div class="hero-status">
+        <span class="offline-badge">Standalone &amp; offline</span>
+        <span class="database-stats" id="databaseStats">Loading embedded databases…</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="workspace">
+        <section class="panel control-panel" aria-labelledby="inputsTitle">
+          <div class="section-heading">
+            <span class="section-number">01</span>
+            <div>
+              <h2 id="inputsTitle">Bridge inputs</h2>
+              <p>Select one known vessel characteristic.</p>
+            </div>
+          </div>
+
+          <div class="field-label">
+            <span>PIANC database</span>
+            <span class="field-hint">embedded</span>
+          </div>
+          <div class="database-switch" id="databaseSwitch" role="group" aria-label="PIANC database"></div>
+
+          <div class="field-group">
+            <label class="field-label" for="vesselSelect">
+              <span>Vessel family</span>
+              <span class="field-hint" id="vesselCountHint">—</span>
+            </label>
+            <div class="select-wrap">
+              <select id="vesselSelect" aria-describedby="vesselCountHint">
+                <option value="">Select a vessel family…</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="characteristicSelect">
+              <span>Known characteristic</span>
+              <span class="field-hint" id="characteristicCountHint">—</span>
+            </label>
+            <div class="select-wrap">
+              <select id="characteristicSelect" disabled>
+                <option value="">Select a numeric characteristic…</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="knownValue">
+              <span>Known value</span>
+              <span class="field-hint" id="inputUnitHint">numeric</span>
+            </label>
+            <div class="input-wrap">
+              <input id="knownValue" type="number" inputmode="decimal" step="any" autocomplete="off" placeholder="Enter a value" disabled>
+            </div>
+            <div class="range-card" id="rangeCard" hidden>
+              <div>
+                <span class="range-title">Valid interpolation range</span>
+                <span class="range-value" id="rangeValue">—</span>
+              </div>
+              <button class="ghost-button" id="midpointButton" type="button">Use midpoint</button>
+            </div>
+          </div>
+
+          <div class="message-box" id="messageBox" role="alert">
+            <span class="message-icon" id="messageIcon">!</span>
+            <span id="messageText"></span>
+          </div>
+
+          <div class="actions">
+            <button class="primary-button" id="calculateButton" type="button" disabled>
+              <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3v18M5 8h14M5 16h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 8c0 3-1.5 5-4 6 1 3 3.5 5 8 5s7-2 8-5c-2.5-1-4-3-4-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Calculate vessel characteristics
+            </button>
+            <button class="secondary-button" id="resetButton" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="panel visual-panel" aria-labelledby="profileTitle">
+          <div class="visual-header">
+            <div class="section-heading">
+              <span class="section-number">02</span>
+              <div>
+                <h2 id="profileTitle">Vessel profile</h2>
+                <p>Live visual context for the selected family.</p>
+              </div>
+            </div>
+            <span class="source-chip" id="sourceChip">WG235 / 2022</span>
+          </div>
+
+          <div class="ship-stage" id="shipStage">
+            <div class="radar-rings" aria-hidden="true"></div>
+            <div class="vessel-placeholder" id="vesselPlaceholder">Select a vessel family to bring the profile and database coverage onto the bridge display.</div>
+            <svg class="ship-svg" id="shipSvg" viewBox="0 0 900 330" role="img" aria-label="Stylised vessel profile" hidden>
+              <defs>
+                <linearGradient id="hullGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#174e70"/>
+                  <stop offset="1" stop-color="#071d32"/>
+                </linearGradient>
+                <linearGradient id="deckGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#1a5b7d"/>
+                  <stop offset="1" stop-color="#0a2d48"/>
+                </linearGradient>
+              </defs>
+              <g id="shipDynamicLayer"></g>
+              <path class="svg-water" d="M40 268c48-16 79 16 127 0s79 16 127 0 79 16 127 0 79 16 127 0 79 16 127 0 79 16 127 0"/>
+              <path class="svg-water" d="M90 288c45-13 75 13 120 0s75 13 120 0 75 13 120 0 75 13 120 0 75 13 120 0" opacity=".55"/>
+              <g id="dimensionLayer"></g>
+            </svg>
+          </div>
+
+          <div class="vessel-meta">
+            <div class="meta-card">
+              <span class="meta-label">Selected family</span>
+              <span class="meta-value" id="metaVessel">No vessel selected</span>
+            </div>
+            <div class="meta-card">
+              <span class="meta-label">Reference rows</span>
+              <span class="meta-value mono" id="metaRows">—</span>
+            </div>
+            <div class="meta-card">
+              <span class="meta-label">Numeric fields</span>
+              <span class="meta-value mono" id="metaFields">—</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel empty-panel" id="emptyPanel">
+        <div class="empty-content">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 15h18l-3 4H6zM7 15l2-6h7l2 6M12 9V4m0 0 4 3h-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>Ready for a new vessel estimate</h2>
+          <p>Choose the database, vessel family, known characteristic and an in-range value. The calculator will interpolate every supported numeric field in one pass.</p>
+        </div>
+      </section>
+
+      <section class="panel results-panel" id="resultsPanel" aria-live="polite" hidden>
+        <div class="results-topbar">
+          <div class="results-title-wrap">
+            <div class="result-kicker" id="resultKicker">Interpolation result</div>
+            <h2 class="results-title" id="resultsTitle">Vessel characteristics</h2>
+            <p class="results-subtitle" id="resultsSubtitle"></p>
+          </div>
+          <span class="class-badge" id="classBadge" hidden></span>
+        </div>
+
+        <div class="summary-grid" id="summaryGrid"></div>
+
+        <div class="results-toolbar">
+          <div class="search-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2"/>
+              <path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input id="resultSearch" type="search" placeholder="Filter characteristics…" aria-label="Filter result characteristics">
+          </div>
+          <div class="tool-buttons">
+            <button class="tool-button" id="copyButton" type="button" title="Copy the current plain-text report">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg>
+              Copy
+            </button>
+            <button class="tool-button" id="downloadButton" type="button" title="Download every calculation made in this session">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Download log
+            </button>
+            <button class="tool-button" id="printButton" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v6H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              Print
+            </button>
+          </div>
+        </div>
+
+        <div class="result-groups" id="resultGroups"></div>
+        <div class="no-filter-results" id="noFilterResults">No characteristics match this filter.</div>
+
+        <details class="raw-output">
+          <summary>Plain-text output compatible with the original calculator</summary>
+          <pre id="rawOutput"></pre>
+        </details>
+      </section>
+
+      <section class="method-strip" aria-label="Calculation method summary">
+        <div class="method-card">
+          <span class="method-index">01 / RANGE</span>
+          <strong>No extrapolation</strong>
+          <span>Inputs must remain inside the selected database field range.</span>
+        </div>
+        <div class="method-card">
+          <span class="method-index">02 / NUMERIC</span>
+          <strong>Shape-preserving PCHIP</strong>
+          <span>Numeric characteristics use piecewise cubic Hermite interpolation.</span>
+        </div>
+        <div class="method-card">
+          <span class="method-index">03 / TEXT</span>
+          <strong>Nearest source record</strong>
+          <span>Text classifications are taken from the closest known data row.</span>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>PIANC vessel characteristics interpolation utility · all data and logic are contained in this HTML file.</span>
+      <span class="footer-right">
+        <span class="log-badge" id="logBadge">0 calculations</span>
+        <span id="runtimeBadge">OFFLINE</span>
+      </span>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <span class="toast-dot"></span>
+    <span id="toastText"></span>
+  </div>
+
+  <script type="application/json" id="database-json">{"PIANC WG235 (2022)":{"shortName":"WG235","year":2022,"description":"Modern PIANC vessel dataset with detailed dimensions, maxima and windage areas.","vessels":{"Crude Oil & Larger Product Tankers":{"columns":{"Class_name":["Coastal/Panamax","Coastal/Panamax","Aframax","Aframax","Suezmax","VLCC","VLCC","VLCC","VLCC","VLCC","ULCC"],"DWT_deadweight_tonnage (t)":[60000.0,70000.0,100000.0,115000.0,150000.0,165000.0,193000.0,280000.0,300000.0,320000.0,450000.0],"Displacement_fully_laden (t)":[75000.0,83000.0,120000.0,135000.0,177000.0,190000.0,230000.0,325000.0,350000.0,370000.0,510000.0],"Cargo_capacity (t)":[56400.0,65800.0,95000.0,109250.0,142500.0,158400.0,185280.0,268800.0,291000.0,310400.0,436500.0],"Loa_length_overall (m)":[214.0,228.0,248.0,250.0,274.0,274.0,288.0,333.0,333.0,333.0,380.0],"Lbp_length_between_perpendiculars (m)":[207.0,219.0,238.0,239.0,264.0,264.0,274.0,319.0,316.0,320.0,366.0],"B_beam (m)":[32.2,32.2,43.0,44.0,50.0,50.0,50.0,60.0,60.0,60.0,68.0],"T_fully_laden (m)":[12.3,13.6,13.5,14.8,16.0,17.1,19.6,20.4,21.6,22.6,24.5],"Cb_block_coefficient ()":[0.892,0.844,0.847,0.846,0.818,0.821,0.836,0.812,0.834,0.832,0.816],"Loa_length_overall_max (m)":[229.0,236.0,253.0,256.0,274.0,281.0,288.0,336.0,339.0,340.0,380.0],"Lbp_length_between_perpendiculars_max (m)":[219.0,229.0,242.0,249.0,264.0,270.0,274.0,330.0,330.0,327.0,366.0],"B_beam_max (m)":[32.2,36.0,45.7,44.0,50.0,50.0,50.0,60.0,60.0,60.0,68.0],"T_fully_laden_max (m)":[12.8,13.7,14.7,15.7,17.6,17.3,19.6,20.5,22.7,22.6,24.5],"Moulded_depth (m)":[18.5,19.8,19.8,21.0,23.2,23.1,28.0,28.8,29.7,30.5,34.0],"Air_draft_ballast (m)":[47.0,50.0,50.0,50.0,50.0,50.0,61.0,61.0,64.0,64.0,64.0],"Lateral_windage_fully_loaded (m2)":[2200.0,2350.0,2750.0,2900.0,3300.0,3400.0,3700.0,4400.0,4600.0,4700.0,5500.0],"Lateral_windage_in_ballast (m2)":[3600.0,3900.0,4600.0,5000.0,5500.0,5800.0,6300.0,7800.0,8100.0,8300.0,10000.0],"Longitudinal_windage_fully_loaded (m2)":[800.0,850.0,930.0,970.0,1030.0,1050.0,1100.0,1270.0,1300.0,1320.0,1400.0],"Longitudinal_windage_in_ballast (m2)":[1050.0,1100.0,1250.0,1300.0,1450.0,1500.0,1650.0,1900.0,1950.0,2000.0,2250.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (t)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":11,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[157500.0,5],[385000.0,10]],"Displacement_fully_laden (t)":[[183500.0,5],[440000.0,10]],"Cargo_capacity (t)":[[150450.0,5],[373450.0,10]],"Loa_length_overall (m)":[[274.0,5],[281.0,5]],"Lbp_length_between_perpendiculars (m)":[[264.0,5],[269.0,5],[343.0,10]],"B_beam (m)":[[50.0,5],[55.0,7]],"T_fully_laden (m)":[[16.55,5],[23.55,10]],"Loa_length_overall_max (m)":[[277.5,5],[360.0,10]],"Lbp_length_between_perpendiculars_max (m)":[[267.0,5]],"B_beam_max (m)":[[50.0,5],[55.0,7]],"T_fully_laden_max (m)":[[18.6,6]],"Moulded_depth (m)":[[32.25,10]],"Lateral_windage_fully_loaded (m2)":[[3350.0,5],[5100.0,10]],"Lateral_windage_in_ballast (m2)":[[5650.0,5],[9150.0,10]],"Longitudinal_windage_fully_loaded (m2)":[[1040.0,5],[1360.0,10]],"Longitudinal_windage_in_ballast (m2)":[[1475.0,5],[2125.0,10]]},"nearestGroupOverrides":{"Loa_length_overall (m)":[[274.0,5]],"Lbp_length_between_perpendiculars (m)":[[264.0,5]],"B_beam (m)":[[50.0,5]],"B_beam_max (m)":[[50.0,5]]}},"Product Chemical and Dual Product Tankers (small/medium)":{"columns":{"Class_name":["General Purpose","General Purpose","General Purpose","General Purpose","Medium Range 1","Medium Range 1","Medium Range 2","Long Range 1"],"DWT_deadweight_tonnage (t)":[3000.0,5000.0,10000.0,20000.0,30000.0,40000.0,50000.0,75000.0],"Displacement_fully_laden (t)":[4500.0,8500.0,15000.0,26000.0,38000.0,52000.0,62500.0,91000.0],"Cargo_capacity (t)":[2700.0,4500.0,9200.0,18500.0,28000.0,37500.0,47000.0,70500.0],"Loa_length_overall (m)":[89.0,105.0,120.0,164.0,177.0,182.0,183.0,229.0],"Lbp_length_between_perpendiculars (m)":[82.0,99.0,115.0,154.0,168.0,174.0,175.0,220.0],"B_beam (m)":[13.0,16.0,20.0,23.0,29.0,32.2,32.2,32.2],"T_fully_laden (m)":[5.5,6.4,7.8,8.5,9.5,11.0,12.9,14.7],"Cb_block_coefficient ()":[0.749,0.818,0.816,0.843,0.801,0.823,0.839,0.853],"Loa_length_overall_max (m)":[98.0,139.0,142.0,169.0,180.0,188.0,189.0,229.0],"Lbp_length_between_perpendiculars_max (m)":[96.0,132.0,133.0,158.0,173.0,180.0,180.0,221.0],"B_beam_max (m)":[16.6,22.5,21.0,27.9,31.0,32.2,32.2,40.0],"T_fully_laden_max (m)":[6.1,7.0,8.8,10.0,11.4,12.2,13.5,14.7],"Moulded_depth (m)":[6.5,8.3,11.6,12.7,14.0,17.3,18.4,20.8],"Air_draft_ballast (m)":[28.0,32.0,45.0,45.0,45.0,45.0,47.0,48.0],"Lateral_windage_fully_loaded (m2)":[400.0,500.0,900.0,1400.0,1800.0,1950.0,2050.0,2400.0],"Lateral_windage_in_ballast (m2)":[600.0,900.0,1500.0,2000.0,2700.0,3000.0,3250.0,3950.0],"Longitudinal_windage_fully_loaded (m2)":[230.0,250.0,320.0,400.0,570.0,680.0,770.0,860.0],"Longitudinal_windage_in_ballast (m2)":[260.0,300.0,400.0,570.0,750.0,870.0,950.0,1130.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (t)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[45000.0,6]],"Displacement_fully_laden (t)":[[57250.0,6]],"Cargo_capacity (t)":[[42250.0,6]],"Loa_length_overall (m)":[[182.5,6]],"Lbp_length_between_perpendiculars (m)":[[174.5,6]],"B_beam (m)":[[32.2,6],[30.6,7]],"Cb_block_coefficient ()":[[0.831,6],[0.841,3]],"Loa_length_overall_max (m)":[[188.5,6]],"Lbp_length_between_perpendiculars_max (m)":[[180.0,6],[200.5,6]],"B_beam_max (m)":[[32.2,6],[36.1,6]],"T_fully_laden_max (m)":[[12.85,6]],"Lateral_windage_fully_loaded (m2)":[[2000.0,6]],"Lateral_windage_in_ballast (m2)":[[3125.0,6]],"Longitudinal_windage_fully_loaded (m2)":[[725.0,6]],"Longitudinal_windage_in_ballast (m2)":[[910.0,6]]},"nearestGroupOverrides":{"B_beam (m)":[[32.2,6]],"Lbp_length_between_perpendiculars_max (m)":[[180.0,6]],"B_beam_max (m)":[[32.2,6]]}},"Bulk Carriers":{"columns":{"Class_name":["Small Chemical Tanker","Handy size","Handy size","Handy size","Handymax","Handymax","Supramax","Panamax","Panamax","Post-Panamax","Post-Panamax (wide)","Post-Panamax (narrow)","Mini Cape","Small Cape","Cape","Cape","Cape","Large cape","VLOC","VLOC","VLOC","Valemax"],"DWT_deadweight_tonnage (t)":[5000.0,10000.0,20000.0,30000.0,40000.0,50000.0,60000.0,70000.0,80000.0,85000.0,100000.0,100000.0,120000.0,150000.0,170000.0,185000.0,200000.0,230000.0,250000.0,300000.0,325000.0,400000.0],"Displacement_fully_laden (t)":[7000.0,14000.0,26000.0,39000.0,50000.0,62000.0,72000.0,80000.0,95000.0,95000.0,120000.0,110000.0,140000.0,172000.0,195000.0,215000.0,230000.0,260000.0,290000.0,340000.0,380000.0,450000.0],"Cargo_capacity (t)":[4450.0,8900.0,18200.0,27900.0,37200.0,47000.0,56400.0,65800.0,76000.0,80750.0,95000.0,95000.0,114000.0,142500.0,163200.0,177600.0,192000.0,220800.0,240000.0,288000.0,312000.0,384000.0],"Loa_length_overall (m)":[96.0,114.0,155.0,179.0,180.0,190.0,200.0,225.0,229.0,229.0,250.0,240.0,260.0,273.0,291.0,290.0,300.0,325.0,330.0,327.0,333.0,360.0],"Lbp_length_between_perpendiculars (m)":[90.0,107.0,144.0,170.0,177.0,182.0,195.0,215.0,222.0,225.0,245.0,236.0,254.0,260.0,279.0,280.0,290.0,315.0,321.0,318.0,327.0,353.0],"B_beam (m)":[16.0,19.4,23.7,28.0,30.0,32.2,32.2,32.2,32.2,38.0,43.0,38.0,43.0,43.0,45.0,47.0,50.0,52.5,57.0,55.0,60.0,65.0],"T_fully_laden (m)":[6.0,8.0,9.2,9.8,10.7,12.0,13.0,13.3,14.5,13.5,13.2,14.5,14.5,17.4,17.8,18.0,18.0,18.2,18.1,21.6,22.7,23.0],"Cb_block_coefficient ()":[0.79,0.822,0.808,0.816,0.859,0.86,0.861,0.848,0.894,0.803,0.842,0.825,0.862,0.863,0.851,0.885,0.86,0.843,0.854,0.878,0.832,0.832],"Loa_length_overall_max (m)":[107.0,134.0,166.0,190.0,200.0,200.0,200.0,230.0,229.0,235.0,250.0,240.0,260.0,273.0,291.0,300.0,300.0,325.0,325.0,330.0,340.0,362.0],"Lbp_length_between_perpendiculars_max (m)":[100.0,126.0,156.0,183.0,190.0,195.0,196.0,220.0,226.0,229.0,245.0,236.0,254.0,265.0,280.0,294.0,294.0,315.0,321.0,328.0,327.0,355.0],"B_beam_max (m)":[17.0,22.6,25.0,30.0,32.0,32.2,32.2,32.2,32.2,40.0,43.0,38.0,43.0,46.0,47.0,47.5,50.0,58.0,58.0,60.0,60.0,65.0],"T_fully_laden_max (m)":[6.5,8.2,9.9,11.5,11.6,12.9,13.1,13.5,14.7,14.6,14.6,14.6,15.6,17.6,18.5,18.5,18.4,19.2,19.2,22.2,23.0,23.2],"Moulded_depth (m)":[7.7,10.4,13.0,14.0,15.0,17.0,18.6,18.5,20.1,19.1,18.5,20.0,20.3,23.9,24.2,24.4,24.1,24.3,25.1,29.3,29.8,30.4],"Air_draft_ballast (m)":[32.0,35.0,39.0,43.0,45.0,45.0,48.0,48.0,49.0,49.0,50.0,50.0,50.0,51.0,54.0,54.0,54.0,58.0,58.0,63.0,63.0,63.0],"Lateral_windage_fully_loaded (m2)":[600.0,1400.0,1600.0,1700.0,1850.0,1900.0,2000.0,2100.0,2150.0,2300.0,2500.0,2400.0,2600.0,2850.0,3000.0,3150.0,3350.0,3600.0,3750.0,4000.0,4300.0,4400.0],"Lateral_windage_in_ballast (m2)":[900.0,1800.0,2300.0,2700.0,3000.0,3300.0,3500.0,3800.0,4000.0,4100.0,4550.0,4550.0,4800.0,5850.0,6300.0,6500.0,6800.0,7200.0,7600.0,8500.0,8700.0,9700.0],"Longitudinal_windage_fully_loaded (m2)":[200.0,400.0,460.0,520.0,550.0,600.0,650.0,700.0,730.0,750.0,800.0,700.0,850.0,930.0,1000.0,1050.0,1100.0,1200.0,1250.0,1350.0,1400.0,1450.0],"Longitudinal_windage_in_ballast (m2)":[250.0,470.0,550.0,650.0,750.0,850.0,900.0,950.0,1000.0,1050.0,1100.0,1000.0,1250.0,1400.0,1500.0,1600.0,1680.0,1800.0,1900.0,2100.0,2200.0,2400.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (t)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":22,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[55000.0,6],[82500.0,9],[92500.0,10],[215000.0,17],[240000.0,18]],"Displacement_fully_laden (t)":[[95000.0,9],[67000.0,6],[102500.0,9],[130000.0,12],[245000.0,17],[275000.0,18]],"Cargo_capacity (t)":[[51700.0,6],[78375.0,9],[87875.0,10],[206400.0,17],[230400.0,18]],"Loa_length_overall (m)":[[229.0,9],[195.0,6],[234.5,9],[255.0,12],[312.5,17],[326.0,19]],"Lbp_length_between_perpendiculars (m)":[[188.5,6],[223.5,9],[230.5,11],[249.5,12],[302.5,17],[316.5,19]],"B_beam (m)":[[32.2,6],[38.0,11],[43.0,12],[31.1,7],[35.1,6],[40.5,12],[44.0,12],[51.25,17],[53.75,19]],"T_fully_laden (m)":[[12.5,6],[13.4,9],[14.0,12],[15.95,12]],"Cb_block_coefficient ()":[[0.86,16]],"Loa_length_overall_max (m)":[[325.0,18],[214.5,8],[232.5,9],[237.5,11],[255.0,12],[327.5,18]],"Lbp_length_between_perpendiculars_max (m)":[[195.5,6],[227.5,9],[232.5,11],[249.5,12],[318.0,18]],"B_beam_max (m)":[[32.2,6],[43.0,12],[58.0,18],[32.1,7],[35.1,6],[39.0,9],[44.5,12],[54.0,17],[59.0,20]],"T_fully_laden_max (m)":[[14.6,10],[19.2,18],[13.0,6],[14.05,10],[14.649999999999999,10],[18.85,18],[20.7,18]],"Moulded_depth (m)":[[17.75,7],[18.85,9],[19.55,11],[24.75,18]],"Air_draft_ballast (m)":[[49.0,9],[58.0,18],[46.5,7],[49.5,11],[50.5,12],[52.5,15],[60.5,20]],"Lateral_windage_fully_loaded (m2)":[[1950.0,6],[2225.0,9],[2350.0,11],[2550.0,12],[3475.0,17],[3675.0,18]],"Lateral_windage_in_ballast (m2)":[[3400.0,6],[4050.0,9],[4325.0,10],[7000.0,17],[7400.0,18]],"Longitudinal_windage_fully_loaded (m2)":[[625.0,6],[740.0,9],[825.0,12],[1150.0,17],[1225.0,18]],"Longitudinal_windage_in_ballast (m2)":[[1000.0,11],[875.0,6],[1025.0,11],[1175.0,12],[1740.0,17],[1850.0,18]]},"nearestGroupOverrides":{"Displacement_fully_laden (t)":[[95000.0,9]],"Loa_length_overall (m)":[[229.0,9]],"B_beam (m)":[[32.2,6],[38.0,11],[43.0,12]],"Cb_block_coefficient ()":[[0.86,16]],"Loa_length_overall_max (m)":[[325.0,18]],"B_beam_max (m)":[[32.2,6],[43.0,12],[58.0,18]],"T_fully_laden_max (m)":[[14.6,10],[19.2,18]],"Air_draft_ballast (m)":[[49.0,9],[58.0,18]],"Longitudinal_windage_in_ballast (m2)":[[1000.0,11]]}},"LNG Carriers":{"columns":{"Class_name":["Combination Gas/LPG","LNG Small","Combination Gas/LPG","LNG Conventional","LNG Conventional","LNG Conventional","LNG New Panamax","LNG New Panamax","LNG-Qflex","LNG-Qflex","LNG-QMax","LNG-QMax"],"DWT_deadweight_tonnage (t)":[10000.0,11000.0,20000.0,40000.0,70000.0,80000.0,90000.0,98000.0,107000.0,120000.0,130000.0,155000.0],"Displacement_fully_laden (t)":[16500.0,20000.0,32000.0,58000.0,105000.0,114000.0,125000.0,135000.0,150000.0,165000.0,179000.0,206000.0],"Cargo_capacity (m3)":[16500.0,19000.0,30000.0,75000.0,130000.0,145000.0,160000.0,175000.0,211000.0,216000.0,261000.0,267000.0],"Loa_length_overall (m)":[137.0,151.0,180.0,220.0,274.0,289.0,289.0,296.0,315.0,315.0,345.0,345.0],"Lbp_length_between_perpendiculars (m)":[127.0,140.0,171.0,211.0,260.0,274.0,275.0,284.0,303.0,304.0,332.0,333.0],"B_beam (m)":[19.8,28.0,26.6,35.0,47.2,48.0,45.6,46.4,50.0,50.0,53.8,55.0],"T_fully_laden (m)":[8.3,7.7,9.4,10.0,11.8,12.3,12.5,12.8,12.5,13.6,12.2,13.7],"Cb_block_coefficient ()":[0.771,0.646,0.73,0.766,0.707,0.688,0.778,0.781,0.773,0.779,0.801,0.801],"Loa_length_overall_max (m)":[137.0,156.0,180.0,220.0,298.0,300.0,300.0,300.0,315.0,315.0,345.0,345.0],"Lbp_length_between_perpendiculars_max (m)":[127.0,146.0,171.0,211.0,283.0,285.0,292.0,294.0,303.0,304.0,332.0,333.0],"B_beam_max (m)":[19.8,28.0,26.6,35.0,47.2,49.0,48.9,50.0,50.0,50.0,53.8,55.0],"T_fully_laden_max (m)":[8.3,8.2,9.4,10.0,12.0,12.5,13.0,13.0,12.0,13.6,12.2,13.7],"Moulded_depth (m)":[11.5,16.0,17.8,22.5,26.5,26.5,26.0,26.5,27.0,27.0,27.0,27.0],"Air_draft_ballast (m)":[38.0,45.0,43.0,59.0,68.0,68.0,68.0,68.0,58.0,58.0,58.0,58.0],"Lateral_windage_fully_loaded (m2)":[1850.0,2300.0,3200.0,4100.0,6400.0,6800.0,7300.0,7600.0,8000.0,8200.0,8300.0,8400.0],"Lateral_windage_in_ballast (m2)":[2200.0,2500.0,3500.0,4500.0,7000.0,7500.0,8000.0,8400.0,8800.0,9050.0,9200.0,9400.0],"Longitudinal_windage_fully_loaded (m2)":[400.0,450.0,765.0,1080.0,1400.0,1500.0,1550.0,1650.0,1750.0,1800.0,1850.0,1950.0],"Longitudinal_windage_in_ballast (m2)":[450.0,500.0,825.0,1150.0,1500.0,1600.0,1700.0,1800.0,1900.0,1950.0,2000.0,2100.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (m3)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":12,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[30000.0,3],[85000.0,6],[125000.0,10]],"Displacement_fully_laden (t)":[[45000.0,3],[119500.0,6],[172000.0,10]],"Cargo_capacity (m3)":[[52500.0,3],[152500.0,6],[238500.0,10]],"Loa_length_overall (m)":[[289.0,6],[200.0,3],[292.5,6],[330.0,11]],"Lbp_length_between_perpendiculars (m)":[[191.0,3],[274.5,6],[318.0,10]],"B_beam (m)":[[31.5,3]],"T_fully_laden (m)":[[12.0,10],[12.25,5]],"Cb_block_coefficient ()":[[0.772,8],[0.78,7],[0.791,10]],"Loa_length_overall_max (m)":[[300.0,6],[200.0,3],[299.0,7],[307.5,6],[330.0,11]],"Lbp_length_between_perpendiculars_max (m)":[[191.0,3],[288.5,6],[318.0,10]],"B_beam_max (m)":[[31.5,3]],"T_fully_laden_max (m)":[[12.0,8],[12.1,8]],"Moulded_depth (m)":[[27.0,11]],"Air_draft_ballast (m)":[[51.5,8]],"Lateral_windage_fully_loaded (m2)":[[3650.0,3],[7050.0,6],[8250.0,10]],"Lateral_windage_in_ballast (m2)":[[4000.0,3],[7750.0,6],[9125.0,10]],"Longitudinal_windage_fully_loaded (m2)":[[922.5,3],[1525.0,6],[1825.0,10]],"Longitudinal_windage_in_ballast (m2)":[[987.5,3],[1650.0,6],[1975.0,10]]},"nearestGroupOverrides":{"Loa_length_overall (m)":[[289.0,6]],"Loa_length_overall_max (m)":[[300.0,6]],"T_fully_laden_max (m)":[[12.0,8]],"Moulded_depth (m)":[[27.0,11]]}},"LPG Carriers":{"columns":{"Class_name":["Small Gas Carrier","Small Gas Carrier","Small Gas Carrier","Small Gas Carrier","Handysize Gas Carrier","Medium Gas Carrier (MGC)","Large Gas Carrier (LGC)","Very Large Gas Carrier (VLGC)","Very Large Gas Carrier (VLGC)"],"DWT_deadweight_tonnage (t)":[1000.0,3000.0,5000.0,10000.0,22000.0,30000.0,43000.0,50000.0,64000.0],"Displacement_fully_laden (t)":[2000.0,5200.0,8800.0,16000.0,33000.0,42000.0,60000.0,69000.0,85000.0],"Cargo_capacity (m3)":[1500.0,3500.0,6000.0,12000.0,22000.0,37000.0,59000.0,73000.0,90000.0],"Loa_length_overall (m)":[65.0,96.0,106.0,120.0,160.0,182.0,205.0,230.0,228.0],"Lbp_length_between_perpendiculars (m)":[60.0,90.0,100.0,112.0,152.0,172.0,195.0,219.0,217.0],"B_beam (m)":[11.0,16.4,17.6,19.8,25.6,29.4,32.2,36.6,36.0],"T_fully_laden (m)":[4.2,4.5,5.8,8.8,10.9,10.4,11.9,10.9,13.6],"Cb_block_coefficient ()":[0.704,0.764,0.841,0.8,0.759,0.779,0.783,0.771,0.781],"Loa_length_overall_max (m)":[70.0,102.0,122.0,146.0,170.0,196.0,205.0,230.0,230.0],"Lbp_length_between_perpendiculars_max (m)":[65.0,95.0,115.0,138.0,161.0,186.0,195.0,223.0,225.0],"B_beam_max (m)":[12.4,16.8,20.0,21.6,26.6,30.0,33.2,36.6,36.6],"T_fully_laden_max (m)":[4.5,6.8,7.1,8.8,11.4,11.6,12.6,12.1,13.6],"Moulded_depth (m)":[5.1,7.2,8.1,11.2,16.4,18.0,20.8,20.4,22.6],"Air_draft_ballast (m)":[24.0,32.0,41.0,41.0,47.0,55.0,55.0,55.0,55.0],"Lateral_windage_fully_loaded (m2)":[600.0,800.0,950.0,1350.0,2200.0,2650.0,3100.0,3300.0,3550.0],"Lateral_windage_in_ballast (m2)":[650.0,850.0,1050.0,1550.0,2500.0,3000.0,3550.0,3750.0,4100.0],"Longitudinal_windage_fully_loaded (m2)":[230.0,290.0,340.0,450.0,670.0,770.0,860.0,920.0,960.0],"Longitudinal_windage_in_ballast (m2)":[240.0,300.0,360.0,480.0,720.0,820.0,930.0,980.0,1050.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (m3)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":9,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[26000.0,5],[36500.0,6]],"Displacement_fully_laden (t)":[[37500.0,5],[51000.0,6]],"Cargo_capacity (m3)":[[29500.0,5],[48000.0,6]],"Loa_length_overall (m)":[[171.0,5],[193.5,6]],"Lbp_length_between_perpendiculars (m)":[[162.0,5],[183.5,6]],"B_beam (m)":[[27.5,5],[30.8,6]],"T_fully_laden (m)":[[10.9,7],[10.65,4],[11.4,7]],"Cb_block_coefficient ()":[[0.78,8],[0.782,6]],"Loa_length_overall_max (m)":[[183.0,5],[200.5,6]],"Lbp_length_between_perpendiculars_max (m)":[[173.5,5],[190.5,6]],"B_beam_max (m)":[[28.3,5],[31.6,6]],"T_fully_laden_max (m)":[[11.5,5],[11.85,7]],"Moulded_depth (m)":[[17.2,5],[19.2,7]],"Air_draft_ballast (m)":[[55.0,6],[51.0,7]],"Lateral_windage_fully_loaded (m2)":[[2425.0,5],[2875.0,6]],"Lateral_windage_in_ballast (m2)":[[2750.0,5],[3275.0,6]],"Longitudinal_windage_fully_loaded (m2)":[[720.0,5],[815.0,6]],"Longitudinal_windage_in_ballast (m2)":[[770.0,5],[875.0,6]]},"nearestGroupOverrides":{"T_fully_laden (m)":[[10.9,7]],"Air_draft_ballast (m)":[[55.0,6]]}},"Container Ships (Post-Panamax)":{"columns":{"Class_name":["Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax","Post-Panamax"],"DWT_deadweight_tonnage (t)":[52000.0,60000.0,65000.0,70000.0,80000.0,90000.0,100000.0,110000.0,120000.0,130000.0,150000.0,165000.0,185000.0,200000.0,225000.0,240000.0],"Displacement_fully_laden (t)":[72000.0,82000.0,88000.0,96000.0,108000.0,123000.0,136000.0,145000.0,160000.0,172000.0,195000.0,211000.0,243000.0,265000.0,285000.0,307000.0],"Cargo_capacity (TEU)":[4300.0,5200.0,5500.0,6000.0,6800.0,8500.0,8700.0,9000.0,10000.0,11500.0,14000.0,15000.0,19000.0,20000.0,23700.0,24000.0],"Loa_length_overall (m)":[228.0,249.0,255.0,280.0,304.0,316.0,334.0,300.0,337.0,348.0,369.0,366.0,400.0,400.0,400.0,400.0],"Lbp_length_between_perpendiculars (m)":[218.0,235.0,244.0,266.0,292.0,302.0,319.0,286.0,321.0,331.0,352.0,350.0,382.0,383.0,383.0,393.0],"B_beam (m)":[37.3,37.4,37.3,40.3,40.0,45.6,42.8,48.2,48.2,45.2,51.0,51.2,54.0,58.8,61.0,61.2],"T_fully_laden (m)":[12.5,13.5,13.9,14.0,14.0,14.5,14.5,14.5,15.5,15.5,15.6,16.0,16.0,16.0,16.5,17.0],"Cb_block_coefficient ()":[0.691,0.674,0.679,0.624,0.644,0.601,0.67,0.708,0.651,0.724,0.679,0.718,0.718,0.718,0.721,0.733],"Loa_length_overall_max (m)":[267.0,255.0,272.0,285.0,306.0,320.0,340.0,353.0,350.0,363.0,369.0,366.0,400.0,400.0,400.0,400.0],"Lbp_length_between_perpendiculars_max (m)":[250.0,242.0,261.0,271.0,293.0,304.0,325.0,337.0,334.0,348.0,352.0,350.0,383.0,393.0,394.0,393.0],"B_beam_max (m)":[37.3,37.4,40.0,40.3,43.4,46.0,45.8,48.2,48.6,48.2,51.0,51.2,58.6,61.5,61.5,61.5],"T_fully_laden_max (m)":[12.8,13.5,14.0,14.5,14.6,15.0,15.0,15.0,16.0,16.0,16.5,16.0,16.0,16.5,16.5,17.0],"Moulded_depth (m)":[19.3,22.1,22.0,24.1,24.2,25.0,24.6,24.6,27.2,29.7,29.9,29.9,30.2,30.2,33.2,33.2],"Air_draft_ballast (m)":[54.0,54.0,55.0,57.0,57.0,57.0,59.0,59.0,62.0,62.0,66.0,70.0,70.0,70.0,76.0,null],"Lateral_windage_fully_loaded (m2)":[6100.0,6700.0,7100.0,7500.0,8200.0,9100.0,10000.0,10900.0,11700.0,12200.0,13700.0,14400.0,15000.0,16500.0,18000.0,19000.0],"Lateral_windage_in_ballast (m2)":[7400.0,8200.0,8700.0,9200.0,10000.0,11000.0,12000.0,12900.0,13700.0,14700.0,15700.0,16700.0,17800.0,19000.0,20500.0,21500.0],"Longitudinal_windage_fully_loaded (m2)":[1000.0,1250.0,1400.0,1450.0,1550.0,1650.0,1750.0,1880.0,2000.0,2150.0,2350.0,2550.0,2700.0,2900.0,3200.0,3400.0],"Longitudinal_windage_in_ballast (m2)":[1150.0,1500.0,1570.0,1650.0,1800.0,1900.0,2000.0,2150.0,2300.0,2450.0,2750.0,2900.0,3100.0,3250.0,3550.0,3750.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (TEU)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":16,"nearestOverrides":{},"nearestGroupOverrides":{}},"Container Ships (Panamax & smaller)":{"columns":{"Class_name":["Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller","Panamax & smaller"],"DWT_deadweight_tonnage (t)":[10000.0,15000.0,20000.0,25000.0,30000.0,35000.0,40000.0,45000.0,50000.0,55000.0,60000.0,65000.0],"Displacement_fully_laden (t)":[15000.0,22000.0,28000.0,36000.0,43000.0,46000.0,56000.0,62000.0,68000.0,72000.0,83000.0,88000.0],"Cargo_capacity (TEU)":[800.0,1200.0,1500.0,2200.0,2500.0,2800.0,3200.0,3500.0,4200.0,4500.0,5000.0,5000.0],"Loa_length_overall (m)":[140.0,147.0,170.0,185.0,199.0,210.0,233.0,247.0,261.0,261.0,275.0,294.0],"Lbp_length_between_perpendiculars (m)":[133.0,135.0,161.0,176.0,187.0,199.0,220.0,232.0,249.0,249.0,262.0,283.0],"B_beam (m)":[20.5,25.0,25.0,30.0,30.2,30.2,32.3,32.3,32.3,32.3,32.3,32.3],"T_fully_laden (m)":[7.5,9.0,9.5,9.5,11.2,11.5,11.8,12.3,12.6,13.0,13.5,13.5],"Cb_block_coefficient ()":[0.716,0.707,0.714,0.7,0.663,0.649,0.652,0.657,0.655,0.673,0.71,0.697],"Loa_length_overall_max (m)":[143.0,165.0,182.0,199.0,205.0,226.0,245.0,272.0,282.0,294.0,292.0,294.0],"Lbp_length_between_perpendiculars_max (m)":[133.0,151.0,170.0,186.0,193.0,212.0,232.0,243.0,266.0,281.0,277.0,283.0],"B_beam_max (m)":[23.0,27.1,28.0,32.2,32.2,32.2,32.2,32.2,32.2,32.2,32.2,32.2],"T_fully_laden_max (m)":[8.0,9.6,10.8,11.0,11.6,12.8,12.5,12.5,13.0,13.5,13.5,13.7],"Moulded_depth (m)":[10.5,13.7,14.2,16.5,17.5,16.7,17.1,19.3,19.3,19.3,21.5,21.8],"Air_draft_ballast (m)":[43.0,47.0,49.0,53.0,54.0,54.0,54.0,54.0,54.0,54.0,54.0,55.0],"Lateral_windage_fully_loaded (m2)":[2500.0,2800.0,3000.0,3500.0,4000.0,4600.0,5100.0,5600.0,6000.0,6300.0,6700.0,7100.0],"Lateral_windage_in_ballast (m2)":[3300.0,3650.0,4000.0,4600.0,5100.0,5700.0,6300.0,6700.0,7100.0,7600.0,8200.0,8700.0],"Longitudinal_windage_fully_loaded (m2)":[550.0,650.0,750.0,850.0,900.0,950.0,950.0,1050.0,1150.0,1250.0,1250.0,1400.0],"Longitudinal_windage_in_ballast (m2)":[650.0,750.0,850.0,950.0,1000.0,1050.0,1100.0,1200.0,1300.0,1400.0,1500.0,1570.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (TEU)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":12,"nearestOverrides":{},"nearestGroupOverrides":{}},"General Cargo Vessels":{"columns":{"Class_name":["Mini Bulk Carrier","Mini Bulk Carrier","Mini Bulk Carrier","Handysize","Handysize","Handysize","Handysize","Handysize","Handymax","Supramax","Supramax"],"DWT_deadweight_tonnage (t)":[2500.0,5000.0,10000.0,18000.0,25000.0,30000.0,35000.0,38000.0,45000.0,50000.0,55000.0],"Displacement_fully_laden (t)":[4000.0,7500.0,17000.0,29000.0,35000.0,42500.0,47000.0,53000.0,57000.0,68000.0,68000.0],"Cargo_capacity (GT)":[1750.0,3500.0,7500.0,16000.0,19000.0,23200.0,25000.0,26600.0,28200.0,37500.0,34900.0],"Loa_length_overall (m)":[80.0,101.0,111.0,157.0,175.0,193.0,188.0,190.0,185.0,204.0,190.0],"Lbp_length_between_perpendiculars (m)":[73.0,95.0,102.0,148.0,166.0,182.0,177.0,186.0,176.0,194.0,187.0],"B_beam (m)":[13.0,16.2,19.2,22.8,26.5,27.8,27.7,28.5,32.2,32.2,32.2],"T_fully_laden (m)":[5.2,6.4,8.5,10.3,10.3,11.2,11.3,11.0,12.1,12.7,12.9],"Cb_block_coefficient ()":[0.791,0.743,0.996,0.814,0.754,0.732,0.828,0.887,0.811,0.836,0.854],"Loa_length_overall_max (m)":[95.0,139.0,152.0,169.0,190.0,200.0,192.0,200.0,185.0,204.0,190.0],"Lbp_length_between_perpendiculars_max (m)":[90.0,135.0,141.0,160.0,187.0,189.0,180.0,191.0,176.0,194.0,187.0],"B_beam_max (m)":[18.3,16.9,23.0,25.6,28.2,28.0,28.4,30.2,32.2,32.2,32.2],"T_fully_laden_max (m)":[6.8,7.0,9.3,10.4,10.5,11.2,11.4,11.7,12.1,12.7,12.9],"Moulded_depth (m)":[8.5,8.2,13.5,14.0,14.3,15.5,15.5,15.8,17.0,19.0,18.5],"Air_draft_ballast (m)":[27.0,46.0,50.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0,60.0],"Lateral_windage_fully_loaded (m2)":[290.0,450.0,580.0,850.0,1000.0,1100.0,1070.0,1150.0,1180.0,1300.0,1200.0],"Lateral_windage_in_ballast (m2)":[470.0,680.0,1130.0,1380.0,1650.0,1800.0,1770.0,1900.0,2000.0,2300.0,2200.0],"Longitudinal_windage_fully_loaded (m2)":[170.0,260.0,370.0,520.0,620.0,650.0,650.0,680.0,750.0,750.0,750.0],"Longitudinal_windage_in_ballast (m2)":[200.0,300.0,430.0,600.0,720.0,750.0,750.0,780.0,880.0,900.0,880.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (GT)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":11,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[14000.0,3],[47500.0,9]],"Displacement_fully_laden (t)":[[23000.0,3],[62500.0,9]],"Cargo_capacity (GT)":[[11750.0,3],[31550.0,10]],"Loa_length_overall (m)":[[134.0,3],[180.0,8],[186.5,6],[198.5,9]],"Lbp_length_between_perpendiculars (m)":[[125.0,3],[171.0,8],[176.5,6],[186.5,10]],"B_beam (m)":[[32.2,9],[21.0,3]],"T_fully_laden (m)":[[9.4,3]],"Cb_block_coefficient ()":[[0.8125,3],[0.9415,2]],"Loa_length_overall_max (m)":[[190.0,10],[160.5,3],[187.5,4],[191.0,10]],"Lbp_length_between_perpendiculars_max (m)":[[187.0,10],[150.5,3],[178.0,6],[183.5,10],[188.0,10],[192.5,9]],"B_beam_max (m)":[[32.2,9],[24.3,3],[31.200000000000003,9]],"Moulded_depth (m)":[[13.75,3],[17.75,10]],"Air_draft_ballast (m)":[[55.0,3]],"Lateral_windage_fully_loaded (m2)":[[715.0,3],[1190.0,10]],"Lateral_windage_in_ballast (m2)":[[1255.0,3],[2100.0,10]],"Longitudinal_windage_fully_loaded (m2)":[[750.0,9],[445.0,3]],"Longitudinal_windage_in_ballast (m2)":[[880.0,10],[515.0,3],[890.0,10]]},"nearestGroupOverrides":{"B_beam (m)":[[32.2,9]],"Loa_length_overall_max (m)":[[190.0,10]],"Lbp_length_between_perpendiculars_max (m)":[[187.0,10]],"B_beam_max (m)":[[32.2,9]],"Longitudinal_windage_fully_loaded (m2)":[[750.0,9]],"Longitudinal_windage_in_ballast (m2)":[[880.0,10]]}},"Refrigerated Cargo":{"columns":{"Class_name":["Coastal Reefer","Coastal Reefer","Coastal Reefer","Medium Reefer","Medium Reefer","Medium Reefer","Large Reefer","Large Reefer"],"DWT_deadweight_tonnage (t)":[500.0,1000.0,2000.0,5000.0,7500.0,10000.0,15000.0,22000.0],"Displacement_fully_laden (t)":[1700.0,3000.0,3600.0,11000.0,13000.0,17000.0,25000.0,38000.0],"Cargo_capacity (GT)":[1000.0,2500.0,2500.0,4500.0,7000.0,10500.0,15000.0,21500.0],"Loa_length_overall (m)":[67.0,85.0,89.0,121.0,134.0,152.0,145.0,190.0],"Lbp_length_between_perpendiculars (m)":[61.0,76.0,81.0,113.0,127.0,139.0,136.0,180.0],"B_beam (m)":[11.5,13.0,12.5,16.6,20.2,23.0,23.6,30.7],"T_fully_laden (m)":[4.0,4.3,5.3,6.9,7.1,8.7,10.0,10.5],"Cb_block_coefficient ()":[0.6,0.655,0.66,0.65,0.655,0.6,0.56,0.64],"Loa_length_overall_max (m)":[67.0,85.0,97.0,129.0,146.0,154.0,185.0,190.0],"Lbp_length_between_perpendiculars_max (m)":[61.0,76.0,87.0,122.0,138.0,145.0,175.0,180.0],"B_beam_max (m)":[11.5,13.0,14.2,19.0,20.8,24.0,25.2,30.7],"T_fully_laden_max (m)":[4.5,4.9,5.8,7.5,8.9,9.3,10.3,10.5],"Moulded_depth (m)":[6.0,6.5,6.8,10.0,10.3,13.0,15.7,15.5],"Air_draft_ballast (m)":[30.0,30.0,30.0,31.0,40.0,43.0,43.0,43.0],"Lateral_windage_fully_loaded (m2)":[380.0,550.0,680.0,1250.0,1850.0,2300.0,2800.0,3450.0],"Lateral_windage_in_ballast (m2)":[450.0,660.0,815.0,1500.0,2220.0,2760.0,3360.0,4140.0],"Longitudinal_windage_fully_loaded (m2)":[120.0,160.0,185.0,320.0,480.0,620.0,750.0,920.0],"Longitudinal_windage_in_ballast (m2)":[145.0,195.0,220.0,385.0,575.0,740.0,900.0,1100.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (GT)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[3500.0,3],[12500.0,6]],"Displacement_fully_laden (t)":[[7300.0,3],[21000.0,6]],"Cargo_capacity (GT)":[[12750.0,6]],"Loa_length_overall (m)":[[105.0,3],[139.5,6],[148.5,5]],"Lbp_length_between_perpendiculars (m)":[[97.0,3],[131.5,6],[137.5,5]],"B_beam (m)":[[14.8,3],[23.3,6]],"T_fully_laden (m)":[[9.35,6]],"Cb_block_coefficient ()":[[0.655,4],[0.6525000000000001,4],[0.6575,4]],"Loa_length_overall_max (m)":[[113.0,3],[169.5,6]],"Lbp_length_between_perpendiculars_max (m)":[[104.5,3],[160.0,6]],"T_fully_laden_max (m)":[[9.8,6]],"Moulded_depth (m)":[[14.25,7]],"Air_draft_ballast (m)":[[43.0,6],[41.5,7]],"Lateral_windage_fully_loaded (m2)":[[965.0,3],[2550.0,6]],"Lateral_windage_in_ballast (m2)":[[1157.5,3],[3060.0,6]],"Longitudinal_windage_fully_loaded (m2)":[[252.5,3],[685.0,6]],"Longitudinal_windage_in_ballast (m2)":[[302.5,3],[820.0,6]]},"nearestGroupOverrides":{"Cb_block_coefficient ()":[[0.655,4]],"Air_draft_ballast (m)":[[43.0,6]]}},"Freight RoRo Ships":{"columns":{"Class_name":["Small / Coastal RoRo","Medium / Regional RoRo","Medium / Regional RoRo","Deep-Sea RoRo / ConRo","Deep-Sea RoRo / ConRo","Large RoRo / PCTC","Large RoRo / PCTC","Large RoRo / PCTC"],"DWT_deadweight_tonnage (t)":[2500.0,5000.0,10000.0,18000.0,25000.0,30000.0,45000.0,55000.0],"Displacement_fully_laden (t)":[5000.0,11000.0,23000.0,37000.0,45000.0,53000.0,68000.0,90000.0],"Cargo_capacity (GT)":[4500.0,9000.0,18000.0,35000.0,48000.0,60000.0,75000.0,100000.0],"Loa_length_overall (m)":[92.0,142.0,193.0,205.0,211.0,236.0,240.0,296.0],"Lbp_length_between_perpendiculars (m)":[79.0,133.0,182.0,190.0,197.0,222.0,220.0,287.0],"B_beam (m)":[18.0,23.0,26.0,25.5,32.3,36.2,37.5,37.6],"T_fully_laden (m)":[4.2,5.7,7.4,8.5,9.8,9.8,11.5,11.5],"Cb_block_coefficient ()":[0.625,0.625,0.625,0.665,0.645,0.675,0.68,0.68],"Loa_length_overall_max (m)":[108.0,160.0,210.0,238.0,238.0,236.0,250.0,296.0],"Lbp_length_between_perpendiculars_max (m)":[100.0,150.0,198.0,230.0,230.0,222.0,237.0,287.0],"B_beam_max (m)":[18.6,25.0,28.0,38.6,36.0,36.2,38.7,37.6],"T_fully_laden_max (m)":[5.4,6.8,8.0,9.0,9.8,10.0,11.5,11.5],"Moulded_depth (m)":[7.9,16.3,16.7,15.7,13.5,13.9,20.0,23.0],"Air_draft_ballast (m)":[15.0,20.0,24.0,30.0,35.0,40.0,45.0,50.0],"Lateral_windage_fully_loaded (m2)":[1150.0,2800.0,4200.0,5500.0,6800.0,8500.0,10200.0,13500.0],"Lateral_windage_in_ballast (m2)":[1380.0,3360.0,5040.0,6600.0,8150.0,10200.0,12240.0,16200.0],"Longitudinal_windage_fully_loaded (m2)":[250.0,580.0,750.0,950.0,1250.0,1600.0,1900.0,2400.0],"Longitudinal_windage_in_ballast (m2)":[320.0,725.0,940.0,1180.0,1560.0,2000.0,2370.0,3000.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (GT)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[14000.0,3],[27500.0,5]],"Displacement_fully_laden (t)":[[30000.0,3],[49000.0,5]],"Cargo_capacity (GT)":[[26500.0,3],[54000.0,5]],"Loa_length_overall (m)":[[199.0,3],[223.5,5]],"Lbp_length_between_perpendiculars (m)":[[186.0,3],[208.5,6]],"B_beam (m)":[[25.75,2],[34.25,5]],"T_fully_laden (m)":[[9.8,5],[7.95,3],[10.65,7]],"Cb_block_coefficient ()":[[0.67,5]],"Loa_length_overall_max (m)":[[223.0,5]],"Lbp_length_between_perpendiculars_max (m)":[[210.0,5]],"B_beam_max (m)":[[32.0,4],[38.1,3]],"T_fully_laden_max (m)":[[8.5,3],[9.9,5]],"Air_draft_ballast (m)":[[27.0,3],[37.5,5]],"Lateral_windage_fully_loaded (m2)":[[4850.0,3],[7650.0,5]],"Lateral_windage_in_ballast (m2)":[[5820.0,3],[9175.0,5]],"Longitudinal_windage_fully_loaded (m2)":[[850.0,3],[1425.0,5]],"Longitudinal_windage_in_ballast (m2)":[[1060.0,3],[1780.0,5]]},"nearestGroupOverrides":{"T_fully_laden (m)":[[9.8,5]]}},"Car Carriers":{"columns":{"Class_name":["Small PCTC","Small PCTC","Small PCTC","Medium PCTC","Medium PCTC","Large PCTC","LCTC","Large PCTC","LCTC","LCTC","Large PCTC","Large PCTC"],"DWT_deadweight_tonnage (t)":[2500.0,5000.0,7000.0,12000.0,15000.0,18000.0,20000.0,20000.0,25000.0,30000.0,40000.0,50000.0],"Displacement_fully_laden (t)":[6500.0,12000.0,16000.0,27000.0,35000.0,37000.0,42000.0,45000.0,48000.0,55000.0,70000.0,75000.0],"Cargo_capacity (cars)":[800.0,2000.0,2200.0,4800.0,5000.0,6500.0,7500.0,6500.0,8000.0,8000.0,9950.0,10910.0],"Loa_length_overall (m)":[116.0,140.0,140.0,183.0,180.0,200.0,200.0,200.0,230.0,231.0,245.0,265.0],"Lbp_length_between_perpendiculars (m)":[108.0,131.0,131.0,170.0,172.0,192.0,189.0,190.0,224.0,219.0,226.0,249.0],"B_beam (m)":[17.2,22.4,22.7,31.5,30.0,32.3,35.4,32.3,32.3,32.3,32.3,32.3],"T_fully_laden (m)":[5.1,6.4,7.4,9.0,9.2,9.6,10.0,10.0,10.3,11.3,11.8,12.3],"Cb_block_coefficient ()":[0.669,0.623,0.709,0.547,0.719,0.607,0.612,0.716,0.629,0.672,0.794,0.741],"Loa_length_overall_max (m)":[129.0,165.0,173.0,183.0,200.0,200.0,200.0,200.0,232.0,232.0,265.0,265.0],"Lbp_length_between_perpendiculars_max (m)":[118.0,157.0,163.0,171.0,192.0,196.0,196.0,192.0,224.0,222.0,250.0,249.0],"B_beam_max (m)":[21.2,27.6,30.2,32.2,36.5,38.0,38.0,32.2,36.5,32.2,32.2,32.2],"T_fully_laden_max (m)":[5.6,7.5,7.9,9.1,10.0,10.0,10.2,11.0,11.0,11.6,12.3,12.3],"Moulded_depth (m)":[12.0,23.0,23.3,31.8,33.5,35.8,33.0,33.8,35.1,34.7,32.5,22.0],"Air_draft_ballast (m)":[40.0,41.0,42.0,43.0,46.0,48.0,48.0,48.0,48.0,49.0,49.0,49.0],"Lateral_windage_fully_loaded (m2)":[2300.0,3800.0,3800.0,6100.0,6500.0,7500.0,7000.0,7100.0,8000.0,7900.0,8000.0,6300.0],"Lateral_windage_in_ballast (m2)":[2700.0,4500.0,4500.0,7200.0,7700.0,8800.0,8200.0,8400.0,9400.0,9300.0,9400.0,7400.0],"Longitudinal_windage_fully_loaded (m2)":[600.0,800.0,810.0,1130.0,1080.0,1220.0,1270.0,1220.0,1220.0,1220.0,1220.0,1220.0],"Longitudinal_windage_in_ballast (m2)":[650.0,880.0,890.0,1240.0,1180.0,1340.0,1400.0,1340.0,1340.0,1340.0,1340.0,1340.0]},"numericColumns":["DWT_deadweight_tonnage (t)","Displacement_fully_laden (t)","Cargo_capacity (cars)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":12,"nearestOverrides":{"DWT_deadweight_tonnage (t)":[[9500.0,3],[16500.0,5],[19000.0,6],[35000.0,10]],"Displacement_fully_laden (t)":[[21500.0,3],[36000.0,5],[39500.0,6],[62500.0,10]],"Cargo_capacity (cars)":[[3500.0,3],[5750.0,5]],"Loa_length_overall (m)":[[200.0,6],[191.5,7],[215.0,6],[238.0,10]],"Lbp_length_between_perpendiculars (m)":[[180.5,6],[189.5,7],[225.0,10]],"B_beam (m)":[[31.9,8]],"T_fully_laden (m)":[[11.55,10]],"Cb_block_coefficient ()":[[0.649,0],[0.73,11]],"Loa_length_overall_max (m)":[[200.0,7],[178.0,3],[216.0,7],[248.5,11]],"Lbp_length_between_perpendiculars_max (m)":[[192.0,7],[167.0,3],[194.0,6],[236.5,11]],"B_beam_max (m)":[[36.5,8],[38.0,6],[37.25,5]],"T_fully_laden_max (m)":[[10.0,5],[8.5,3],[9.55,5],[10.1,5]],"Moulded_depth (m)":[[32.75,6],[34.25,9]],"Air_draft_ballast (m)":[[48.0,6],[49.0,10],[42.5,3],[47.0,7],[48.5,6]],"Lateral_windage_fully_loaded (m2)":[[6400.0,4],[6750.0,6],[7700.0,9]],"Lateral_windage_in_ballast (m2)":[[7550.0,4],[7950.0,6],[9050.0,9]],"Longitudinal_windage_fully_loaded (m2)":[[945.0,4],[1175.0,8]],"Longitudinal_windage_in_ballast (m2)":[[1035.0,4],[1290.0,8]]},"nearestGroupOverrides":{"Loa_length_overall (m)":[[200.0,6]],"Loa_length_overall_max (m)":[[200.0,7]],"Lbp_length_between_perpendiculars_max (m)":[[192.0,7]],"B_beam_max (m)":[[36.5,8],[38.0,6]],"T_fully_laden_max (m)":[[10.0,5]],"Air_draft_ballast (m)":[[48.0,6],[49.0,10]]}},"Ferries":{"columns":{"Class_name":["Small Ro-Pax Ferry","Small Ro-Pax Ferry","Small Ro-Pax Ferry","Medium Ro-Pax Ferry","Medium Ro-Pax Ferry","Large Ro-Pax Ferry","Large Ro-Pax Ferry"],"GT":[200.0,400.0,700.0,1000.0,3000.0,6000.0,14000.0],"Displacement_fully_laden (t)":[330.0,660.0,1150.0,1700.0,5000.0,5000.0,11000.0],"Cargo_capacity (passengers)":[120.0,220.0,350.0,500.0,850.0,1100.0,1650.0],"Loa_length_overall (m)":[43.0,49.0,67.0,66.0,97.0,100.0,147.0],"Lbp_length_between_perpendiculars (m)":[38.0,42.0,54.0,58.0,88.0,91.0,130.0],"B_beam (m)":[8.3,11.5,10.5,10.0,13.8,18.0,23.4],"T_fully_laden (m)":[2.1,2.5,4.2,3.0,5.2,4.2,5.9],"Cb_block_coefficient ()":[0.486,0.533,0.471,0.953,0.772,0.709,0.598],"Loa_length_overall_max (m)":[57.0,52.0,70.0,83.0,108.0,118.0,147.0],"Lbp_length_between_perpendiculars_max (m)":[42.0,46.0,70.0,72.0,100.0,105.0,130.0],"B_beam_max (m)":[15.0,12.9,14.2,20.0,24.0,23.7,23.4],"T_fully_laden_max (m)":[3.7,4.7,4.4,3.9,5.5,5.4,5.9],"Moulded_depth (m)":[3.3,4.0,6.5,4.1,8.8,9.4,13.4],"Air_draft_ballast (m)":[12.0,15.0,20.0,15.0,25.0,28.0,40.0],"Lateral_windage_fully_loaded (m2)":[200.0,300.0,400.0,350.0,600.0,1000.0,2000.0],"Lateral_windage_in_ballast (m2)":[220.0,340.0,460.0,400.0,700.0,1150.0,2300.0],"Longitudinal_windage_fully_loaded (m2)":[60.0,90.0,110.0,100.0,150.0,220.0,360.0],"Longitudinal_windage_in_ballast (m2)":[65.0,100.0,120.0,110.0,170.0,250.0,410.0]},"numericColumns":["GT","Displacement_fully_laden (t)","Cargo_capacity (passengers)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":7,"nearestOverrides":{"GT":[[850.0,3],[4500.0,5]],"Displacement_fully_laden (t)":[[5000.0,5],[1425.0,3],[8000.0,5]],"Cargo_capacity (passengers)":[[425.0,3],[975.0,5]],"Loa_length_overall (m)":[[66.5,2],[98.5,5]],"Lbp_length_between_perpendiculars (m)":[[56.0,3],[89.5,5]],"B_beam (m)":[[15.9,5]],"T_fully_laden (m)":[[3.6,2]],"Cb_block_coefficient ()":[[0.5655,6]],"Loa_length_overall_max (m)":[[76.5,3],[113.0,5]],"Lbp_length_between_perpendiculars_max (m)":[[71.0,3],[102.5,5]],"B_beam_max (m)":[[17.5,3]],"T_fully_laden_max (m)":[[5.45,4],[5.7,6]],"Moulded_depth (m)":[[5.3,2]],"Air_draft_ballast (m)":[[26.5,5]],"Lateral_windage_fully_loaded (m2)":[[375.0,2],[800.0,5]],"Lateral_windage_in_ballast (m2)":[[430.0,2],[925.0,5]],"Longitudinal_windage_fully_loaded (m2)":[[105.0,2],[185.0,5]],"Longitudinal_windage_in_ballast (m2)":[[115.0,2],[210.0,5]]},"nearestGroupOverrides":{"Displacement_fully_laden (t)":[[5000.0,5]]}},"Cruise Liners":{"columns":{"Class_name":["Boutique / Small Cruise Ship","Boutique / Small Cruise Ship","Boutique / Small Cruise Ship","Boutique / Small Cruise Ship","Boutique / Small Cruise Ship","Boutique / Small Cruise Ship","Mid-Size Cruise Ship","Mid-Size Cruise Ship","Mid-Size Cruise Ship","Large Cruise Ship","Large Cruise Ship","Large Cruise Ship","Large Cruise Ship","Mega Cruise Ship","Mega Cruise Ship","Mega Cruise Ship"],"GT":[1000.0,2500.0,5000.0,10000.0,15000.0,20000.0,30000.0,40000.0,60000.0,80000.0,100000.0,120000.0,140000.0,170000.0,185000.0,225000.0],"Displacement_fully_laden (t)":[1000.0,3200.0,5000.0,9000.0,12000.0,15000.0,20000.0,26000.0,35000.0,45000.0,54000.0,64000.0,74000.0,84000.0,87000.0,105000.0],"Cargo_capacity (passengers)":[60.0,120.0,200.0,320.0,500.0,700.0,950.0,1350.0,2000.0,2350.0,3000.0,3550.0,4000.0,4700.0,5500.0,6050.0],"Loa_length_overall (m)":[84.0,97.0,100.0,133.0,156.0,167.0,181.0,210.0,238.0,281.0,272.0,317.0,311.0,339.0,337.0,362.0],"Lbp_length_between_perpendiculars (m)":[73.0,78.0,90.0,112.0,134.0,147.0,158.0,177.0,203.0,258.0,230.0,294.0,275.0,312.0,325.0,331.0],"B_beam (m)":[11.9,14.9,16.2,19.0,22.0,24.0,25.5,28.0,32.3,32.3,35.5,36.8,38.6,41.0,42.0,47.0],"T_fully_laden (m)":[4.1,4.9,4.7,5.0,5.9,6.6,6.0,6.8,8.1,8.0,8.3,8.6,8.3,8.8,8.8,9.3],"Cb_block_coefficient ()":[0.274,0.548,0.712,0.825,0.673,0.628,0.807,0.753,0.644,0.659,0.777,0.671,0.819,0.728,0.707,0.708],"Loa_length_overall_max (m)":[84.0,112.0,136.0,163.0,187.0,190.0,207.0,226.0,246.0,301.0,300.0,319.0,343.0,348.0,337.0,362.0],"Lbp_length_between_perpendiculars_max (m)":[73.0,103.0,122.0,141.0,156.0,180.0,170.0,205.0,220.0,259.0,273.0,294.0,306.0,320.0,325.0,331.0],"B_beam_max (m)":[13.5,15.6,20.5,21.9,26.5,32.0,28.3,32.6,32.2,32.2,35.8,37.5,39.7,43.0,43.0,47.0],"T_fully_laden_max (m)":[4.7,6.6,6.9,6.3,7.6,8.6,7.7,8.4,8.2,8.5,8.6,8.6,9.1,8.9,8.8,9.3],"Moulded_depth (m)":[5.2,8.5,7.0,12.4,16.3,13.5,18.1,8.8,11.0,20.1,11.2,11.3,11.7,12.1,11.8,22.6],"Air_draft_ballast (m)":[58.0,58.0,65.0,65.0,66.0,66.0,66.0,66.0,66.0,66.0,66.0,66.0,68.0,70.0,70.0,70.0],"Lateral_windage_fully_loaded (m2)":[1000.0,1500.0,1700.0,3300.0,3700.0,4200.0,5200.0,6000.0,7700.0,9200.0,10800.0,12100.0,13500.0,14830.0,16610.0,17500.0],"Lateral_windage_in_ballast (m2)":[1050.0,1600.0,1800.0,3500.0,3900.0,4450.0,5500.0,6300.0,8100.0,9700.0,11400.0,12800.0,14200.0,15600.0,17500.0,18500.0],"Longitudinal_windage_fully_loaded (m2)":[200.0,300.0,350.0,700.0,750.0,800.0,900.0,1030.0,1230.0,1450.0,1650.0,1870.0,2100.0,2330.0,2645.0,2800.0],"Longitudinal_windage_in_ballast (m2)":[210.0,320.0,370.0,750.0,800.0,850.0,950.0,1100.0,1300.0,1550.0,1750.0,1980.0,2220.0,2470.0,2800.0,2960.0]},"numericColumns":["GT","Displacement_fully_laden (t)","Cargo_capacity (passengers)","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":16,"nearestOverrides":{"GT":[[25000.0,6],[70000.0,9]],"Displacement_fully_laden (t)":[[17500.0,6],[40000.0,9]],"Cargo_capacity (passengers)":[[825.0,6],[2175.0,9]],"Loa_length_overall (m)":[[174.0,6],[255.0,10]],"Lbp_length_between_perpendiculars (m)":[[152.5,6],[216.5,10]],"B_beam (m)":[[32.3,9],[24.75,6],[33.9,9]],"T_fully_laden (m)":[[5.95,6],[6.3,5]],"Cb_block_coefficient ()":[[0.636,8],[0.672,4],[0.71,2],[0.72,13],[0.765,10],[0.822,3]],"Loa_length_overall_max (m)":[[198.5,6],[273.0,10],[328.0,14]],"Lbp_length_between_perpendiculars_max (m)":[[163.0,6],[175.0,5],[239.5,9]],"B_beam_max (m)":[[41.35,14]],"T_fully_laden_max (m)":[[8.6,10],[8.55,10],[8.7,10]],"Moulded_depth (m)":[[8.65,7],[11.1,10],[12.25,3],[21.35,15]],"Air_draft_ballast (m)":[[66.0,7],[67.0,7]],"Lateral_windage_fully_loaded (m2)":[[4700.0,6],[8450.0,9]],"Lateral_windage_in_ballast (m2)":[[4975.0,6],[8900.0,9]],"Longitudinal_windage_fully_loaded (m2)":[[850.0,6],[1340.0,9]],"Longitudinal_windage_in_ballast (m2)":[[900.0,6],[1425.0,9]]},"nearestGroupOverrides":{"B_beam (m)":[[32.3,9]],"T_fully_laden_max (m)":[[8.6,10]],"Air_draft_ballast (m)":[[66.0,7]]}},"Fishing Vessels > 200 GT":{"columns":{"Class_name":["Coastal Fishing Vessel","Coastal Fishing Vessel","Coastal Fishing Vessel","Coastal Fishing Vessel","Mid-Water Fishing Vessel","Mid-Water Fishing Vessel","Mid-Water Fishing Vessel","Mid-Water Fishing Vessel","Factory / Distant Water Trawler","Factory / Distant Water Trawler","Factory / Distant Water Trawler","Factory / Distant Water Trawler"],"GT":[200.0,250.0,300.0,400.0,600.0,1000.0,1500.0,2000.0,3000.0,6000.0,9000.0,13000.0],"Displacement_fully_laden (t)":[554.0,482.0,647.0,910.0,1458.0,1790.0,3019.0,3573.0,6000.0,11000.0,16000.0,21000.0],"Cargo_capacity":[182.0,158.0,212.0,298.0,478.0,586.0,989.0,1171.0,1890.0,3465.0,5040.0,6615.0],"Loa_length_overall (m)":[38.0,44.0,47.0,55.0,54.0,53.0,65.0,75.0,92.0,114.0,108.0,153.0],"Lbp_length_between_perpendiculars (m)":[32.0,35.0,43.0,50.0,46.0,46.0,60.0,70.0,80.0,107.0,100.0,142.0],"B_beam (m)":[8.3,7.5,7.8,9.0,10.4,10.6,13.0,13.5,15.2,17.0,21.0,22.3],"T_fully_laden (m)":[3.7,3.2,3.3,3.4,5.1,6.1,6.4,6.2,6.5,6.9,7.3,9.0],"Cb_block_coefficient ()":[0.55,0.56,0.57,0.58,0.583,0.587,0.59,0.595,0.741,0.855,1.018,0.719],"Loa_length_overall_max (m)":[60.0,52.0,68.0,71.0,71.0,78.0,85.0,108.0,105.0,129.0,141.0,155.0],"Lbp_length_between_perpendiculars_max (m)":[52.0,47.0,57.0,59.0,61.0,73.0,75.0,95.0,95.0,118.0,131.0,142.0],"B_beam_max (m)":[12.2,15.0,14.5,12.3,15.7,12.6,15.0,15.0,18.0,21.0,23.0,24.0],"T_fully_laden_max (m)":[5.5,5.2,5.0,6.0,6.3,6.9,7.9,8.4,8.5,8.0,8.0,9.6],"Moulded_depth (m)":[3.9,4.0,3.6,4.0,7.1,7.0,8.3,6.5,9.4,10.2,8.4,13.6],"Air_draft_ballast (m)":[15.0,18.0,18.0,20.0,25.0,25.0,30.0,30.0,35.0,40.0,40.0,45.0],"Lateral_windage_fully_loaded (m2)":[100.0,120.0,100.0,120.0,220.0,160.0,240.0,160.0,420.0,560.0,400.0,950.0],"Lateral_windage_in_ballast (m2)":[110.0,140.0,120.0,150.0,260.0,200.0,300.0,200.0,530.0,700.0,500.0,1200.0],"Longitudinal_windage_fully_loaded (m2)":[30.0,30.0,30.0,35.0,70.0,70.0,90.0,90.0,140.0,170.0,180.0,310.0],"Longitudinal_windage_in_ballast (m2)":[35.0,35.0,35.0,40.0,80.0,80.0,100.0,100.0,160.0,190.0,200.0,350.0]},"numericColumns":["GT","Displacement_fully_laden (t)","Cargo_capacity","Loa_length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_fully_laden (m)","Cb_block_coefficient ()","Loa_length_overall_max (m)","Lbp_length_between_perpendiculars_max (m)","B_beam_max (m)","T_fully_laden_max (m)","Moulded_depth (m)","Air_draft_ballast (m)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)","Longitudinal_windage_fully_loaded (m2)","Longitudinal_windage_in_ballast (m2)"],"rowCount":12,"nearestOverrides":{"Loa_length_overall (m)":[[50.0,5],[54.5,3],[60.0,6]],"Lbp_length_between_perpendiculars (m)":[[44.5,4],[55.0,6]],"Loa_length_overall_max (m)":[[118.5,9]],"B_beam_max (m)":[[15.0,6],[15.35,4]]},"nearestGroupOverrides":{"B_beam_max (m)":[[15.0,6]]}}}},"PIANC WG121 (2014)":{"shortName":"WG121","year":2014,"description":"Foundational PIANC harbour approach channel vessel dataset.","vessels":{"Tankers (ULCC)":{"columns":{"dm_maximum_mass_displacement (t)":[350000.0,400000.0,500000.0],"Loa_Length_overall (m)":[365.0,380.0,415.0],"Lbp_length_between_perpendiculars (m)":[345.0,358.0,392.0],"B_beam (m)":[65.5,68.0,73.0],"T_laden (m)":[22.0,23.0,24.0],"Cb_block_coefficient ()":[0.82,0.83,0.84],"Capacity":[null,null,null],"dm_fully_laden (t)":[420000.0,475000.0,590000.0],"Lateral_windage_fully_loaded (m2)":[5400.0,5700.0,6400.0],"Lateral_windage_in_ballast (m2)":[9200.0,9700.0,11000.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":3,"nearestOverrides":{},"nearestGroupOverrides":{}},"Tankers (VLCC)":{"columns":{"dm_maximum_mass_displacement (t)":[200000.0,225000.0,250000.0,275000.0,300000.0],"Loa_Length_overall (m)":[310.0,320.0,330.0,340.0,350.0],"Lbp_length_between_perpendiculars (m)":[294.0,303.0,312.0,321.0,330.0],"B_beam (m)":[55.0,57.0,59.0,61.0,63.0],"T_laden (m)":[18.5,19.3,19.9,20.5,21.0],"Cb_block_coefficient ()":[0.8,0.81,0.81,0.81,0.82],"Capacity":[null,null,null,null,null],"dm_fully_laden (t)":[246000.0,277000.0,305000.0,335000.0,365000.0],"Lateral_windage_fully_loaded (m2)":[4000.0,4300.0,4600.0,4900.0,5100.0],"Lateral_windage_in_ballast (m2)":[6800.0,7300.0,7700.0,8200.0,8600.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":5,"nearestOverrides":{},"nearestGroupOverrides":{}},"Tankers":{"columns":{"dm_maximum_mass_displacement (t)":[60000.0,70000.0,80000.0,100000.0,125000.0,150000.0,175000.0],"Loa_Length_overall (m)":[217.0,225.0,235.0,250.0,270.0,285.0,300.0],"Lbp_length_between_perpendiculars (m)":[206.0,213.0,223.0,236.0,255.0,270.0,285.0],"B_beam (m)":[36.0,38.0,40.0,43.0,46.5,49.5,52.5],"T_laden (m)":[13.0,13.5,14.0,15.1,16.0,16.9,17.7],"Cb_block_coefficient ()":[0.79,0.8,0.8,0.8,0.8,0.8,0.8],"Capacity":[null,null,null,null,null,null,null],"dm_fully_laden (t)":[78000.0,90000.0,102000.0,125000.0,156000.0,186000.0,217000.0],"Lateral_windage_fully_loaded (m2)":[2150.0,2250.0,2450.0,2750.0,3100.0,3400.0,3750.0],"Lateral_windage_in_ballast (m2)":[3500.0,3700.0,4000.0,4500.0,5100.0,5700.0,6200.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":7,"nearestOverrides":{},"nearestGroupOverrides":{}},"Product and Chemical Tankers":{"columns":{"dm_maximum_mass_displacement (t)":[3000.0,5000.0,10000.0,20000.0,30000.0,40000.0,50000.0],"Loa_Length_overall (m)":[90.0,110.0,145.0,174.0,188.0,200.0,210.0],"Lbp_length_between_perpendiculars (m)":[85.0,104.0,137.0,165.0,178.0,190.0,200.0],"B_beam (m)":[13.0,15.0,19.0,24.5,28.0,30.0,32.2],"T_laden (m)":[6.0,7.0,7.8,9.8,10.8,11.8,12.6],"Cb_block_coefficient ()":[0.72,0.71,0.72,0.71,0.76,0.78,0.79],"Capacity":[null,null,null,null,null,null,null],"dm_fully_laden (t)":[4900.0,8000.0,15000.0,29000.0,42000.0,54000.0,66000.0],"Lateral_windage_fully_loaded (m2)":[400.0,500.0,760.0,1100.0,1400.0,1650.0,1900.0],"Lateral_windage_in_ballast (m2)":[600.0,800.0,1200.0,1800.0,2200.0,2600.0,3000.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":7,"nearestOverrides":{},"nearestGroupOverrides":{}},"Bulk Carriers /OBOs":{"columns":{"dm_maximum_mass_displacement (t)":[10000.0,20000.0,40000.0,60000.0,80000.0,100000.0,125000.0,150000.0,200000.0,250000.0,300000.0,350000.0,400000.0],"Loa_Length_overall (m)":[130.0,160.0,195.0,220.0,240.0,255.0,275.0,290.0,315.0,335.0,350.0,362.0,375.0],"Lbp_length_between_perpendiculars (m)":[124.0,152.0,185.0,210.0,228.0,242.0,262.0,276.0,300.0,318.0,333.0,344.0,356.0],"B_beam (m)":[18.0,23.5,29.0,33.5,36.5,39.0,41.5,44.0,48.5,52.5,56.0,59.0,62.5],"T_laden (m)":[7.5,9.3,11.5,12.8,14.0,15.3,16.5,17.5,19.0,20.5,21.8,23.0,24.0],"Cb_block_coefficient ()":[0.76,0.76,0.79,0.8,0.82,0.82,0.82,0.82,0.83,0.83,0.84,0.85,0.85],"Capacity":[null,null,null,null,null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[13000.0,26000.0,50000.0,74000.0,98000.0,121000.0,150000.0,179000.0,236000.0,292000.0,350000.0,406000.0,464000.0],"Lateral_windage_fully_loaded (m2)":[1200.0,1400.0,1700.0,2050.0,2450.0,2700.0,3000.0,3250.0,3600.0,4000.0,4250.0,4400.0,4500.0],"Lateral_windage_in_ballast (m2)":[1800.0,2300.0,2800.0,3500.0,4200.0,4800.0,5400.0,5900.0,6900.0,7700.0,8200.0,8500.0,8700.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":13,"nearestOverrides":{},"nearestGroupOverrides":{}},"LNG Carriers (Prismatic)":{"columns":{"dm_maximum_mass_displacement (t)":[27000.0,52000.0,80000.0,90000.0,97000.0,125000.0],"Loa_Length_overall (m)":[208.0,247.0,280.0,298.0,315.0,345.0],"Lbp_length_between_perpendiculars (m)":[196.0,231.0,269.0,285.0,303.0,333.0],"B_beam (m)":[29.3,34.8,43.4,46.0,50.0,55.0],"T_laden (m)":[9.2,9.5,11.4,11.8,12.0,12.0],"Cb_block_coefficient ()":[0.74,0.74,0.73,0.76,0.76,0.78],"Capacity":[40000.0,75000.0,140000.0,177000.0,218000.0,267000.0],"dm_fully_laden (t)":[40000.0,58000.0,100000.0,120000.0,141000.0,175000.0],"Lateral_windage_fully_loaded (m2)":[2900.0,4150.0,6000.0,6200.0,7000.0,8400.0],"Lateral_windage_in_ballast (m2)":[3300.0,4600.0,6500.0,6800.0,7700.0,9300.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":6,"nearestOverrides":{},"nearestGroupOverrides":{}},"LNG Carriers (Spheres, Moss)":{"columns":{"dm_maximum_mass_displacement (t)":[51000.0,58000.0,75000.0],"Loa_Length_overall (m)":[250.0,274.0,288.0],"Lbp_length_between_perpendiculars (m)":[237.0,262.0,274.0],"B_beam (m)":[40.0,42.0,49.0],"T_laden (m)":[10.6,11.3,11.5],"Cb_block_coefficient ()":[0.69,0.78,0.74],"Capacity":[90000.0,125000.0,145000.0],"dm_fully_laden (t)":[71000.0,99000.0,117000.0],"Lateral_windage_fully_loaded (m2)":[5650.0,7550.0,8300.0],"Lateral_windage_in_ballast (m2)":[6000.0,8000.0,8800.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":3,"nearestOverrides":{},"nearestGroupOverrides":{}},"LPG Carriers":{"columns":{"dm_maximum_mass_displacement (t)":[3000.0,5000.0,10000.0,20000.0,30000.0,40000.0,50000.0,60000.0],"Loa_Length_overall (m)":[116.0,134.0,160.0,207.0,226.0,240.0,248.0,265.0],"Lbp_length_between_perpendiculars (m)":[110.0,126.0,152.0,197.0,216.0,230.0,238.0,245.0],"B_beam (m)":[13.3,16.0,21.1,26.8,32.4,35.2,39.0,42.2],"T_laden (m)":[7.0,8.1,9.3,10.6,11.2,12.3,12.9,13.5],"Cb_block_coefficient ()":[0.52,0.53,0.56,0.58,0.61,0.64,0.65,0.66],"Capacity":[null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[5500.0,8800.0,17000.0,33000.0,49000.0,65000.0,80000.0,95000.0],"Lateral_windage_fully_loaded (m2)":[null,1050.0,1500.0,2150.0,3500.0,4150.0,4600.0,5250.0],"Lateral_windage_in_ballast (m2)":[1200.0,1700.0,2500.0,3900.0,4600.0,5100.0,5800.0,6200.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{},"nearestGroupOverrides":{}},"Container Ships (Post-Panamax)":{"columns":{"dm_maximum_mass_displacement (t)":[55000.0,60000.0,65000.0,70000.0,80000.0,90000.0,100000.0,110000.0,120000.0,125000.0,165000.0,195000.0,200000.0,245000.0],"Loa_Length_overall (m)":[261.0,268.0,274.0,280.0,300.0,313.0,326.0,340.0,352.0,370.0,398.0,418.0,400.0,470.0],"Lbp_length_between_perpendiculars (m)":[248.0,255.0,260.0,266.0,284.0,298.0,310.0,323.0,335.0,351.0,376.0,395.0,385.0,446.0],"B_beam (m)":[38.3,39.8,41.2,41.8,40.3,42.8,42.8,43.2,45.6,45.8,56.4,56.4,59.0,60.0],"T_laden (m)":[12.8,13.2,13.5,13.8,14.5,14.5,14.5,14.5,14.8,15.0,15.0,16.0,16.5,18.0],"Cb_block_coefficient ()":[0.61,0.61,0.62,0.64,0.66,0.66,0.71,0.7,0.68,0.7,0.66,0.68,0.68,0.69],"Capacity":[4800.0,5200.0,5600.0,6000.0,6500.0,7000.0,7500.0,8000.0,9000.0,10000.0,12200.0,14500.0,18000.0,22000.0],"dm_fully_laden (t)":[76500.0,84000.0,92000.0,100000.0,112000.0,126000.0,140000.0,145000.0,158000.0,174000.0,215000.0,250000.0,260000.0,340000.0],"Lateral_windage_fully_loaded (m2)":[5200.0,5400.0,5500.0,5800.0,6100.0,6500.0,6900.0,7200.0,8000.0,8700.0,9500.0,10100.0,10700.0,11000.0],"Lateral_windage_in_ballast (m2)":[5500.0,5700.0,5800.0,6100.0,6500.0,7000.0,7500.0,7800.0,8700.0,9500.0,10500.0,11300.0,12000.0,12500.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":14,"nearestOverrides":{},"nearestGroupOverrides":{}},"Container Ships (Panamax)":{"columns":{"dm_maximum_mass_displacement (t)":[10000.0,15000.0,20000.0,25000.0,30000.0,35000.0,40000.0,45000.0,50000.0,55000.0,60000.0],"Loa_Length_overall (m)":[130.0,152.0,174.0,195.0,210.0,222.0,237.0,255.0,267.0,278.0,290.0],"Lbp_length_between_perpendiculars (m)":[124.0,144.0,165.0,185.0,200.0,211.0,225.0,242.0,253.0,264.0,275.0],"B_beam (m)":[21.2,23.7,26.2,28.5,30.0,32.2,32.2,32.2,32.2,32.2,32.2],"T_laden (m)":[7.3,8.5,9.2,10.1,10.7,11.1,11.7,12.2,12.5,12.8,13.2],"Cb_block_coefficient ()":[0.69,0.67,0.66,0.61,0.62,0.61,0.62,0.63,0.65,0.68,0.69],"Capacity":[750.0,1100.0,1500.0,1800.0,2200.0,2600.0,3000.0,3500.0,4000.0,4500.0,5000.0],"dm_fully_laden (t)":[13500.0,20000.0,27000.0,33500.0,40500.0,47500.0,54000.0,61000.0,68000.0,75500.0,83000.0],"Lateral_windage_fully_loaded (m2)":[1800.0,2000.0,2400.0,2900.0,3350.0,3550.0,3750.0,4150.0,4500.0,4900.0,5300.0],"Lateral_windage_in_ballast (m2)":[1900.0,2100.0,2500.0,3000.0,3500.0,3700.0,3900.0,4300.0,4700.0,5100.0,5500.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":11,"nearestOverrides":{},"nearestGroupOverrides":{}},"Freight RoRo Ships":{"columns":{"dm_maximum_mass_displacement (t)":[5000.0,10000.0,15000.0,20000.0,25000.0,30000.0,35000.0,40000.0,45000.0,50000.0],"Loa_Length_overall (m)":[121.0,153.0,177.0,197.0,216.0,231.0,245.0,260.0,275.0,287.0],"Lbp_length_between_perpendiculars (m)":[115.0,145.0,168.0,187.0,205.0,219.0,233.0,247.0,261.0,273.0],"B_beam (m)":[19.3,23.4,26.2,28.6,31.0,32.0,32.2,32.2,32.2,32.2],"T_laden (m)":[6.0,7.4,8.4,9.1,9.6,10.2,10.8,11.4,12.0,12.4],"Cb_block_coefficient ()":[0.7,0.71,0.73,0.72,0.72,0.74,0.76,0.77,0.79,0.78],"Capacity":[600.0,1000.0,1500.0,2000.0,2500.0,3000.0,3500.0,4000.0,4500.0,5000.0],"dm_fully_laden (t)":[9500.0,18400.0,27500.0,36000.0,45000.0,54000.0,63000.0,72000.0,81500.0,87500.0],"Lateral_windage_fully_loaded (m2)":[2200.0,3100.0,3750.0,4250.0,4600.0,5100.0,5600.0,6200.0,6850.0,7500.0],"Lateral_windage_in_ballast (m2)":[2300.0,3200.0,3900.0,4400.0,4800.0,5300.0,5800.0,6400.0,7100.0,7800.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":10,"nearestOverrides":{},"nearestGroupOverrides":{}},"Cargo Vessels":{"columns":{"dm_maximum_mass_displacement (t)":[2500.0,5000.0,10000.0,15000.0,20000.0,25000.0,30000.0,35000.0,40000.0],"Loa_Length_overall (m)":[85.0,105.0,133.0,152.0,166.0,178.0,188.0,199.0,209.0],"Lbp_length_between_perpendiculars (m)":[80.0,100.0,127.0,145.0,158.0,169.0,179.0,189.0,199.0],"B_beam (m)":[13.0,15.8,19.8,22.6,24.8,26.4,27.7,28.9,30.0],"T_laden (m)":[5.0,6.4,8.0,9.2,10.0,10.7,11.3,12.0,12.5],"Cb_block_coefficient ()":[0.75,0.72,0.7,0.7,0.7,0.71,0.71,0.71,0.71],"Capacity":[null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[4000.0,7500.0,14500.0,21500.0,28000.0,34500.0,41000.0,48000.0,54500.0],"Lateral_windage_fully_loaded (m2)":[620.0,900.0,1380.0,1770.0,2100.0,2360.0,2700.0,3000.0,3250.0],"Lateral_windage_in_ballast (m2)":[800.0,1200.0,1800.0,2400.0,2800.0,3200.0,3700.0,4100.0,4500.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":9,"nearestOverrides":{},"nearestGroupOverrides":{}},"Car Carriers":{"columns":{"dm_maximum_mass_displacement (t)":[8000.0,13000.0,18000.0,27000.0,36000.0,45000.0,57000.0,65000.0,70000.0],"Loa_Length_overall (m)":[100.0,130.0,150.0,175.0,190.0,198.0,205.0,220.0,228.0],"Lbp_length_between_perpendiculars (m)":[95.0,124.0,143.0,167.0,175.0,182.0,189.0,205.0,210.0],"B_beam (m)":[17.0,18.8,22.7,28.0,32.2,32.2,32.2,32.2,32.2],"T_laden (m)":[4.9,6.2,7.4,8.4,9.0,10.0,10.9,11.0,11.3],"Cb_block_coefficient ()":[0.53,0.54,0.55,0.55,0.55,0.59,0.62,0.64,0.66],"Capacity":[700.0,1000.0,2000.0,3000.0,4000.0,5000.0,6000.0,7000.0,8000.0],"dm_fully_laden (t)":[4300.0,8000.0,13500.0,22000.0,28500.0,35500.0,42000.0,48000.0,52000.0],"Lateral_windage_fully_loaded (m2)":[1300.0,2000.0,2600.0,3400.0,3850.0,4300.0,4850.0,5400.0,5700.0],"Lateral_windage_in_ballast (m2)":[1400.0,2200.0,3000.0,4000.0,4600.0,5100.0,5800.0,6500.0,6900.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":9,"nearestOverrides":{},"nearestGroupOverrides":{}},"Ferries":{"columns":{"dm_maximum_mass_displacement (t)":[1000.0,2000.0,3000.0,5000.0,6500.0,7000.0,8000.0,9000.0,10200.0,11500.0,12500.0,15000.0,20000.0,30000.0,40000.0,50000.0],"Loa_Length_overall (m)":[74.0,95.0,110.0,133.0,155.0,161.0,164.0,170.0,175.0,182.0,187.0,197.0,219.0,253.0,281.0,309.0],"Lbp_length_between_perpendiculars (m)":[68.0,87.0,102.0,124.0,144.0,149.0,152.0,158.0,163.0,169.0,174.0,183.0,204.0,237.0,264.0,291.0],"B_beam (m)":[14.6,17.1,19.0,21.6,22.7,23.5,24.1,25.3,26.5,27.6,28.7,30.6,32.8,36.4,39.0,41.6],"T_laden (m)":[3.3,4.1,4.7,5.4,5.6,5.8,5.9,6.1,6.3,6.5,6.7,7.1,7.8,8.8,9.8,10.3],"Cb_block_coefficient ()":[0.54,0.56,0.57,0.58,0.56,0.58,0.59,0.6,0.61,0.61,0.61,0.61,0.63,0.65,0.65,0.65],"Capacity":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[1800.0,3500.0,5300.0,8600.0,10500.0,12000.0,13000.0,15000.0,17000.0,19000.0,21000.0,25000.0,33800.0,50300.0,66800.0,82500.0],"Lateral_windage_fully_loaded (m2)":[570.0,760.0,950.0,1420.0,1700.0,1800.0,1900.0,2100.0,2200.0,2350.0,2450.0,2650.0,3300.0,4300.0,5200.0,6150.0],"Lateral_windage_in_ballast (m2)":[600.0,800.0,1000.0,1500.0,1800.0,1900.0,2000.0,2200.0,2300.0,2500.0,2600.0,2800.0,3500.0,4500.0,5500.0,6500.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":16,"nearestOverrides":{},"nearestGroupOverrides":{}},"Fast Ferries (multihull)":{"columns":{"dm_maximum_mass_displacement (t)":[250.0,500.0,1000.0,2000.0,4000.0,5000.0,6000.0,9000.0],"Loa_Length_overall (m)":[42.0,46.0,65.0,85.0,92.0,97.0,107.0,127.0],"Lbp_length_between_perpendiculars (m)":[37.0,41.0,62.0,77.0,79.0,83.0,93.0,117.0],"B_beam (m)":[11.6,13.8,16.7,21.2,24.0,24.7,26.5,30.5],"T_laden (m)":[1.6,1.8,2.1,3.1,3.2,3.4,3.7,4.3],"Cb_block_coefficient ()":[0.35,0.35,0.37,0.39,0.42,0.43,0.43,0.43],"Capacity":[null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[95.0,175.0,350.0,700.0,1400.0,1700.0,2100.0,3200.0],"Lateral_windage_fully_loaded (m2)":[420.0,460.0,820.0,1070.0,1120.0,1250.0,1550.0,1850.0],"Lateral_windage_in_ballast (m2)":[450.0,500.0,900.0,1150.0,1200.0,1250.0,1650.0,2000.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{},"nearestGroupOverrides":{}},"Cruise Liners (Post Panamax)":{"columns":{"dm_maximum_mass_displacement (t)":[80000.0,95000.0,105000.0,115000.0,135000.0,160000.0,220000.0],"Loa_Length_overall (m)":[272.0,295.0,294.0,313.0,333.0,339.0,360.0],"Lbp_length_between_perpendiculars (m)":[231.0,273.0,272.0,290.0,308.0,314.0,333.0],"B_beam (m)":[35.0,33.0,35.0,36.0,37.9,43.7,55.0],"T_laden (m)":[8.0,8.3,8.5,8.6,8.8,9.0,9.2],"Cb_block_coefficient ()":[0.66,0.67,0.67,0.66,0.67,0.66,0.67],"Capacity":[null,null,null,null,null,null,null],"dm_fully_laden (t)":[44000.0,51000.0,56000.0,61000.0,71000.0,84000.0,115000.0],"Lateral_windage_fully_loaded (m2)":[8800.0,10400.0,10800.0,11950.0,13100.0,13800.0,15700.0],"Lateral_windage_in_ballast (m2)":[9000.0,10600.0,11000.0,12200.0,13400.0,14100.0,16000.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":7,"nearestOverrides":{},"nearestGroupOverrides":{}},"Cruise Liners (Panamax)":{"columns":{"dm_maximum_mass_displacement (t)":[5000.0,10000.0,15000.0,20000.0,25000.0,30000.0,35000.0,35000.0,40000.0,40000.0,50000.0,50000.0,60000.0,60000.0,70000.0,80000.0,90000.0],"Loa_Length_overall (m)":[100.0,134.0,152.0,169.0,180.0,190.0,192.0,205.0,212.0,210.0,234.0,232.0,252.0,251.0,265.0,280.0,294.0],"Lbp_length_between_perpendiculars (m)":[90.0,123.0,140.0,155.0,165.0,175.0,164.0,188.0,180.0,193.0,199.0,212.0,214.0,232.0,225.0,249.0,272.0],"B_beam (m)":[16.5,18.5,21.0,22.5,24.0,25.0,32.0,26.3,32.2,27.1,32.2,28.0,32.2,28.8,32.2,32.2,32.2],"T_laden (m)":[5.6,5.8,6.4,6.5,6.6,6.7,6.3,6.8,6.5,7.0,7.1,7.4,7.6,7.6,7.8,7.9,8.0],"Cb_block_coefficient ()":[0.59,0.59,0.6,0.6,0.6,0.61,0.62,0.61,0.62,0.64,0.62,0.64,0.63,0.65,0.66,0.66,0.67],"Capacity":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[5000.0,8000.0,11500.0,14000.0,16200.0,18200.0,21000.0,21000.0,24000.0,24000.0,29000.0,29000.0,34000.0,34000.0,38000.0,43000.0,48000.0],"Lateral_windage_fully_loaded (m2)":[1570.0,2350.0,2940.0,3430.0,3920.0,4600.0,4800.0,5500.0,5600.0,5900.0,6450.0,6850.0,7250.0,7850.0,8500.0,9100.0,10400.0],"Lateral_windage_in_ballast (m2)":[1600.0,2400.0,3000.0,3500.0,4000.0,4700.0,4900.0,5600.0,5700.0,6000.0,6600.0,7000.0,7400.0,8000.0,8700.0,9300.0,10600.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":17,"nearestOverrides":{},"nearestGroupOverrides":{}},"Ocean-going Fishing Vessels":{"columns":{"dm_maximum_mass_displacement (t)":[150.0,250.0,500.0,700.0,1000.0,1200.0,1500.0,2000.0,2500.0,3000.0,5000.0,7500.0],"Loa_Length_overall (m)":[32.0,40.0,55.0,65.0,70.0,72.0,76.0,80.0,85.0,90.0,106.0,128.0],"Lbp_length_between_perpendiculars (m)":[28.0,38.0,53.0,62.0,66.0,68.0,72.0,76.0,81.0,85.0,100.0,120.0],"B_beam (m)":[7.5,7.0,8.6,10.0,10.5,11.0,11.3,12.0,13.0,14.0,16.1,17.1],"T_laden (m)":[3.4,3.5,4.0,4.5,4.8,5.0,5.1,5.3,5.6,5.9,6.2,6.8],"Cb_block_coefficient ()":[0.41,0.42,0.43,0.44,0.47,0.5,0.52,0.54,0.58,0.58,0.61,0.64],"Capacity":[null,null,null,null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[300.0,400.0,800.0,1250.0,1600.0,1900.0,2200.0,2700.0,3500.0,4200.0,6200.0,9100.0],"Lateral_windage_fully_loaded (m2)":[135.0,190.0,290.0,345.0,380.0,400.0,430.0,470.0,500.0,550.0,650.0,810.0],"Lateral_windage_in_ballast (m2)":[140.0,200.0,300.0,360.0,400.0,420.0,450.0,490.0,520.0,570.0,670.0,840.0]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":12,"nearestOverrides":{},"nearestGroupOverrides":{}},"Coastal Fishing Vessels":{"columns":{"dm_maximum_mass_displacement (t)":[15.0,25.0,50.0,75.0,100.0],"Loa_Length_overall (m)":[11.0,15.0,21.0,25.0,27.0],"Lbp_length_between_perpendiculars (m)":[9.0,12.0,17.0,22.0,23.0],"B_beam (m)":[5.0,5.5,6.2,6.6,7.0],"T_laden (m)":[2.3,2.6,2.7,2.8,3.1],"Cb_block_coefficient ()":[0.37,0.37,0.39,0.4,0.39],"Capacity":[null,null,null,null,null],"dm_fully_laden (t)":[40.0,65.0,115.0,165.0,200.0],"Lateral_windage_fully_loaded (m2)":[null,null,null,null,null],"Lateral_windage_in_ballast (m2)":[null,null,null,null,null]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":5,"nearestOverrides":{},"nearestGroupOverrides":{}},"Motor Yachts":{"columns":{"dm_maximum_mass_displacement (t)":[null,null,null,null,null,null,null,null,null,null,null],"Loa_Length_overall (m)":[20.0,30.0,40.0,45.0,50.0,60.0,70.0,100.0,120.0,140.0,160.0],"Lbp_length_between_perpendiculars (m)":[17.0,25.0,24.0,39.0,43.0,51.0,60.0,85.0,102.0,120.0,135.0],"B_beam (m)":[5.5,7.5,8.0,8.5,9.0,12.0,13.5,16.5,18.5,23.5,21.8],"T_laden (m)":[2.7,2.9,3.0,3.3,3.5,3.6,3.8,4.8,4.9,5.0,5.5],"Cb_block_coefficient ()":[null,null,null,null,null,null,null,null,null,null,null],"Capacity":[null,null,null,null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[50.0,150.0,250.0,500.0,700.0,1100.0,1600.0,3500.0,4500.0,7000.0,9500.0],"Lateral_windage_fully_loaded (m2)":[null,null,null,null,null,null,null,null,null,null,null],"Lateral_windage_in_ballast (m2)":[null,null,null,null,null,null,null,null,null,null,null]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":11,"nearestOverrides":{},"nearestGroupOverrides":{}},"Motor Boats":{"columns":{"dm_maximum_mass_displacement (t)":[null,null,null,null,null,null],"Loa_Length_overall (m)":[6.0,9.0,12.0,15.0,18.0,21.0],"Lbp_length_between_perpendiculars (m)":[null,null,null,null,null,null],"B_beam (m)":[2.1,2.7,3.4,4.0,4.4,5.0],"T_laden (m)":[1.0,1.5,1.8,2.3,2.7,3.0],"Cb_block_coefficient ()":[null,null,null,null,null,null],"Capacity":[null,null,null,null,null,null],"dm_fully_laden (t)":[1.0,5.0,7.0,17.0,27.0,35.0],"Lateral_windage_fully_loaded (m2)":[null,null,null,null,null,null],"Lateral_windage_in_ballast (m2)":[null,null,null,null,null,null]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":6,"nearestOverrides":{},"nearestGroupOverrides":{}},"Sailing Yachts":{"columns":{"dm_maximum_mass_displacement (t)":[null,null,null,null,null,null,null,null],"Loa_Length_overall (m)":[15.0,20.0,30.0,40.0,50.0,60.0,70.0,90.0],"Lbp_length_between_perpendiculars (m)":[11.0,18.0,28.0,35.0,38.0,42.0,52.0,68.0],"B_beam (m)":[4.5,5.5,7.2,9.3,9.5,11.2,11.5,13.5],"T_laden (m)":[2.5,3.0,3.6,4.5,5.0,5.5,6.0,6.5],"Cb_block_coefficient ()":[null,null,null,null,null,null,null,null],"Capacity":[null,null,null,null,null,null,null,null],"dm_fully_laden (t)":[13.0,40.0,125.0,190.0,550.0,650.0,1000.0,1500.0],"Lateral_windage_fully_loaded (m2)":[null,null,null,null,null,null,null,null],"Lateral_windage_in_ballast (m2)":[null,null,null,null,null,null,null,null]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":8,"nearestOverrides":{},"nearestGroupOverrides":{}},"Sailing Boats":{"columns":{"dm_maximum_mass_displacement (t)":[null,null,null,null,null],"Loa_Length_overall (m)":[3.0,5.0,6.0,10.0,12.0],"Lbp_length_between_perpendiculars (m)":[2.0,4.0,6.0,10.0,11.0],"B_beam (m)":[1.5,2.0,2.4,3.5,3.8],"T_laden (m)":[0.5,1.0,1.5,2.1,2.3],"Cb_block_coefficient ()":[null,null,null,null,null],"Capacity":[null,null,null,null,null],"dm_fully_laden (t)":[1.0,1.0,2.0,5.0,10.0],"Lateral_windage_fully_loaded (m2)":[null,null,null,null,null],"Lateral_windage_in_ballast (m2)":[null,null,null,null,null]},"numericColumns":["dm_maximum_mass_displacement (t)","Loa_Length_overall (m)","Lbp_length_between_perpendiculars (m)","B_beam (m)","T_laden (m)","Cb_block_coefficient ()","Capacity","dm_fully_laden (t)","Lateral_windage_fully_loaded (m2)","Lateral_windage_in_ballast (m2)"],"rowCount":5,"nearestOverrides":{},"nearestGroupOverrides":{}}}}}</script>
+  <script>
+    (() => {
+      'use strict';
+
+      const DATABASES = JSON.parse(document.getElementById('database-json').textContent);
+      const DATABASE_ORDER = ['PIANC WG235 (2022)', 'PIANC WG121 (2014)'];
+      const INSUFFICIENT = 'N/A (Insufficient data)';
+      const INTEGER_COLUMNS = new Set(['Capacity', 'cargo_capacity_(teu)', 'cargo_capacity_(cars)']);
+
+      const state = {
+        databaseName: DATABASE_ORDER[0],
+        vesselName: '',
+        characteristic: '',
+        validRange: null,
+        result: null,
+        sessionLog: [],
+        calculationNumber: 0
+      };
+
+      const elements = {
+        databaseStats: document.getElementById('databaseStats'),
+        databaseSwitch: document.getElementById('databaseSwitch'),
+        vesselSelect: document.getElementById('vesselSelect'),
+        characteristicSelect: document.getElementById('characteristicSelect'),
+        knownValue: document.getElementById('knownValue'),
+        vesselCountHint: document.getElementById('vesselCountHint'),
+        characteristicCountHint: document.getElementById('characteristicCountHint'),
+        inputUnitHint: document.getElementById('inputUnitHint'),
+        rangeCard: document.getElementById('rangeCard'),
+        rangeValue: document.getElementById('rangeValue'),
+        midpointButton: document.getElementById('midpointButton'),
+        messageBox: document.getElementById('messageBox'),
+        messageIcon: document.getElementById('messageIcon'),
+        messageText: document.getElementById('messageText'),
+        calculateButton: document.getElementById('calculateButton'),
+        resetButton: document.getElementById('resetButton'),
+        sourceChip: document.getElementById('sourceChip'),
+        vesselPlaceholder: document.getElementById('vesselPlaceholder'),
+        shipSvg: document.getElementById('shipSvg'),
+        shipDynamicLayer: document.getElementById('shipDynamicLayer'),
+        dimensionLayer: document.getElementById('dimensionLayer'),
+        metaVessel: document.getElementById('metaVessel'),
+        metaRows: document.getElementById('metaRows'),
+        metaFields: document.getElementById('metaFields'),
+        emptyPanel: document.getElementById('emptyPanel'),
+        resultsPanel: document.getElementById('resultsPanel'),
+        resultKicker: document.getElementById('resultKicker'),
+        resultsTitle: document.getElementById('resultsTitle'),
+        resultsSubtitle: document.getElementById('resultsSubtitle'),
+        classBadge: document.getElementById('classBadge'),
+        summaryGrid: document.getElementById('summaryGrid'),
+        resultSearch: document.getElementById('resultSearch'),
+        resultGroups: document.getElementById('resultGroups'),
+        noFilterResults: document.getElementById('noFilterResults'),
+        rawOutput: document.getElementById('rawOutput'),
+        copyButton: document.getElementById('copyButton'),
+        downloadButton: document.getElementById('downloadButton'),
+        printButton: document.getElementById('printButton'),
+        logBadge: document.getElementById('logBadge'),
+        toast: document.getElementById('toast'),
+        toastText: document.getElementById('toastText')
+      };
+
+      const icons = {
+        tanker: `
+          <path class="ship-hull" d="M86 221h698l-34 43H166c-32 0-58-12-80-43z"/>
+          <path class="ship-detail" d="M162 189h540l62 32H108z"/>
+          <rect class="ship-detail" x="605" y="116" width="100" height="73" rx="4"/>
+          <rect class="ship-detail" x="625" y="91" width="62" height="28" rx="3"/>
+          <rect class="ship-window" x="638" y="101" width="10" height="7" rx="1"/><rect class="ship-window" x="655" y="101" width="10" height="7" rx="1"/>
+          <path class="ship-detail" d="M314 188v-28h190v28M350 160v-18h117v18"/>
+          <circle class="ship-accent" cx="372" cy="174" r="8"/><circle class="ship-accent" cx="410" cy="174" r="8"/><circle class="ship-accent" cx="448" cy="174" r="8"/>
+          <path d="M653 91V58M653 58l19 11" fill="none" stroke="#76dcfa" stroke-width="3" stroke-linecap="round"/>
+        `,
+        container: `
+          <path class="ship-hull" d="M70 219h732l-38 45H158c-36 0-66-14-88-45z"/>
+          <path class="ship-detail" d="M128 196h628l45 23H81z"/>
+          <g stroke="rgba(120,222,255,.30)" stroke-width="1">
+            <rect x="171" y="139" width="70" height="56" rx="2" fill="#0e496a"/><rect x="245" y="139" width="70" height="56" rx="2" fill="#115877"/>
+            <rect x="319" y="139" width="70" height="56" rx="2" fill="#0d405e"/><rect x="393" y="139" width="70" height="56" rx="2" fill="#126087"/>
+            <rect x="467" y="139" width="70" height="56" rx="2" fill="#0e496a"/><rect x="541" y="139" width="70" height="56" rx="2" fill="#115877"/>
+            <rect x="208" y="81" width="70" height="56" rx="2" fill="#115877"/><rect x="282" y="81" width="70" height="56" rx="2" fill="#0d405e"/>
+            <rect x="356" y="81" width="70" height="56" rx="2" fill="#126087"/><rect x="430" y="81" width="70" height="56" rx="2" fill="#0e496a"/>
+            <rect x="504" y="81" width="70" height="56" rx="2" fill="#115877"/>
+          </g>
+          <path class="ship-detail" d="M621 195v-82h89v82zM640 113V87h52v26"/>
+          <rect class="ship-window" x="638" y="127" width="13" height="7" rx="1"/><rect class="ship-window" x="658" y="127" width="13" height="7" rx="1"/><rect class="ship-window" x="678" y="127" width="13" height="7" rx="1"/>
+          <path d="M666 87V54m0 0 21 12" fill="none" stroke="#76dcfa" stroke-width="3" stroke-linecap="round"/>
+        `,
+        cruise: `
+          <path class="ship-hull" d="M79 217h724l-50 48H167c-36 0-65-16-88-48z"/>
+          <path class="ship-detail" d="M135 190h598l69 27H91z"/>
+          <path class="ship-detail" d="M198 190v-95h424c50 0 88 24 106 95z"/>
+          <path class="ship-detail" d="M258 95V68h278l46 27z"/>
+          <g fill="#79ddf8" opacity=".75">
+            <rect x="230" y="116" width="18" height="7" rx="2"/><rect x="258" y="116" width="18" height="7" rx="2"/><rect x="286" y="116" width="18" height="7" rx="2"/><rect x="314" y="116" width="18" height="7" rx="2"/><rect x="342" y="116" width="18" height="7" rx="2"/><rect x="370" y="116" width="18" height="7" rx="2"/><rect x="398" y="116" width="18" height="7" rx="2"/><rect x="426" y="116" width="18" height="7" rx="2"/><rect x="454" y="116" width="18" height="7" rx="2"/><rect x="482" y="116" width="18" height="7" rx="2"/><rect x="510" y="116" width="18" height="7" rx="2"/><rect x="538" y="116" width="18" height="7" rx="2"/>
+            <rect x="245" y="145" width="18" height="7" rx="2"/><rect x="275" y="145" width="18" height="7" rx="2"/><rect x="305" y="145" width="18" height="7" rx="2"/><rect x="335" y="145" width="18" height="7" rx="2"/><rect x="365" y="145" width="18" height="7" rx="2"/><rect x="395" y="145" width="18" height="7" rx="2"/><rect x="425" y="145" width="18" height="7" rx="2"/><rect x="455" y="145" width="18" height="7" rx="2"/><rect x="485" y="145" width="18" height="7" rx="2"/><rect x="515" y="145" width="18" height="7" rx="2"/><rect x="545" y="145" width="18" height="7" rx="2"/><rect x="575" y="145" width="18" height="7" rx="2"/>
+          </g>
+          <path class="ship-accent" d="M432 68h70l16-35h41l16 35h25v27H432z"/>
+        `,
+        ferry: `
+          <path class="ship-hull" d="M94 219h694l-43 44H174c-34 0-61-13-80-44z"/>
+          <path class="ship-detail" d="M145 190h579l63 29H106z"/>
+          <path class="ship-detail" d="M207 190v-86h418c49 0 82 30 100 86z"/>
+          <path class="ship-detail" d="M267 104V78h278l46 26z"/>
+          <g fill="#79ddf8" opacity=".75">
+            <rect x="235" y="126" width="24" height="8" rx="2"/><rect x="269" y="126" width="24" height="8" rx="2"/><rect x="303" y="126" width="24" height="8" rx="2"/><rect x="337" y="126" width="24" height="8" rx="2"/><rect x="371" y="126" width="24" height="8" rx="2"/><rect x="405" y="126" width="24" height="8" rx="2"/><rect x="439" y="126" width="24" height="8" rx="2"/><rect x="473" y="126" width="24" height="8" rx="2"/><rect x="507" y="126" width="24" height="8" rx="2"/><rect x="541" y="126" width="24" height="8" rx="2"/>
+          </g>
+          <path class="ship-accent" d="M476 78h67l13-28h39l13 28h18v26H476z"/>
+        `,
+        fishing: `
+          <path class="ship-hull" d="M158 220h588l-46 43H233c-35 0-60-14-75-43z"/>
+          <path class="ship-detail" d="M218 193h453l74 27H177z"/>
+          <path class="ship-detail" d="M448 193v-77h115l57 77z"/>
+          <rect class="ship-window" x="472" y="135" width="22" height="10" rx="2"/><rect class="ship-window" x="505" y="135" width="22" height="10" rx="2"/>
+          <path d="M504 116V55m0 0 38 28M504 73l-93 65m93-39 93 48" fill="none" stroke="#76dcfa" stroke-width="3" stroke-linecap="round"/>
+          <path d="M411 138h-91v31h91" fill="none" stroke="#3aaed7" stroke-width="3"/>
+          <circle class="ship-accent" cx="350" cy="182" r="8"/><circle class="ship-accent" cx="383" cy="182" r="8"/>
+        `,
+        sail: `
+          <path class="ship-hull" d="M238 222h435l-42 43H302c-29 0-50-15-64-43z"/>
+          <path class="ship-detail" d="M303 196h300l69 26H255z"/>
+          <path d="M458 195V48" stroke="#8ce9ff" stroke-width="4" stroke-linecap="round"/>
+          <path d="M452 57 315 183h137z" fill="#1b789c" stroke="rgba(126,225,255,.55)" stroke-width="2"/>
+          <path d="M466 68 602 184H466z" fill="#0e4e70" stroke="rgba(126,225,255,.45)" stroke-width="2"/>
+          <path class="ship-accent" d="M411 196h103l20 26H389z"/>
+        `,
+        cargo: `
+          <path class="ship-hull" d="M82 219h716l-39 45H166c-35 0-63-14-84-45z"/>
+          <path class="ship-detail" d="M131 193h621l45 26H91z"/>
+          <path class="ship-detail" d="M625 193v-81h92v81zM646 112V87h51v25"/>
+          <rect class="ship-window" x="643" y="128" width="13" height="7" rx="1"/><rect class="ship-window" x="663" y="128" width="13" height="7" rx="1"/><rect class="ship-window" x="683" y="128" width="13" height="7" rx="1"/>
+          <path d="M676 87V55m0 0 22 13" fill="none" stroke="#76dcfa" stroke-width="3" stroke-linecap="round"/>
+          <path class="ship-detail" d="M190 145h348v48H190z"/>
+          <path d="M225 145v-34m0 0 63 34M500 145v-34m0 0-63 34" fill="none" stroke="#4dc8ed" stroke-width="3" stroke-linecap="round"/>
+          <path d="M205 159h318M205 176h318" stroke="rgba(126,225,255,.26)" stroke-width="2"/>
+        `
+      };
+
+      function isFiniteNumber(value) {
+        return typeof value === 'number' && Number.isFinite(value);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#039;');
+      }
+
+      function countFinite(values) {
+        let count = 0;
+        for (const value of values) {
+          if (isFiniteNumber(value)) count += 1;
+        }
+        return count;
+      }
+
+      function formatNumber(value, maximumFractionDigits = 2) {
+        if (!isFiniteNumber(value)) return String(value);
+        return new Intl.NumberFormat('en-GB', {
+          maximumFractionDigits,
+          minimumFractionDigits: 0,
+          useGrouping: true
+        }).format(value);
+      }
+
+      function formatPlainValue(value) {
+        if (typeof value === 'number') {
+          if (!Number.isFinite(value)) return 'nan';
+          return Number.isInteger(value) ? String(value) : String(value);
+        }
+        return String(value);
+      }
+
+      function extractUnit(label) {
+        const match = String(label).match(/\(([^()]*)\)\s*$/);
+        return match ? match[1] : '';
+      }
+
+      function humaniseLabel(label) {
+        return String(label)
+          .replaceAll('_', ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function exactFloatRational(value) {
+        const buffer = new ArrayBuffer(8);
+        const view = new DataView(buffer);
+        view.setFloat64(0, Math.abs(value), false);
+        const bits = view.getBigUint64(0, false);
+        const exponentBits = Number((bits >> 52n) & 0x7ffn);
+        const fraction = bits & ((1n << 52n) - 1n);
+
+        let mantissa;
+        let exponent;
+        if (exponentBits === 0) {
+          mantissa = fraction;
+          exponent = -1074;
+        } else {
+          mantissa = (1n << 52n) | fraction;
+          exponent = exponentBits - 1023 - 52;
+        }
+
+        if (exponent >= 0) {
+          return [mantissa << BigInt(exponent), 1n];
+        }
+        return [mantissa, 1n << BigInt(-exponent)];
+      }
+
+      function pythonRound(value, digits = 0) {
+        if (!Number.isFinite(value) || value === 0) return value;
+        if (!Number.isInteger(digits) || digits < 0 || digits > 12) {
+          return Number(value.toFixed(Math.max(0, Math.min(12, digits))));
+        }
+
+        const sign = value < 0 ? -1 : 1;
+        let [numerator, denominator] = exactFloatRational(value);
+        const scale = 10n ** BigInt(digits);
+        numerator *= scale;
+
+        let quotient = numerator / denominator;
+        const remainder = numerator % denominator;
+        const doubled = remainder * 2n;
+        if (doubled > denominator || (doubled === denominator && quotient % 2n !== 0n)) {
+          quotient += 1n;
+        }
+
+        const rounded = Number(quotient) / Number(scale);
+        return sign < 0 ? -rounded : rounded;
+      }
+
+      function pchipEdgeDerivative(h0, h1, m0, m1) {
+        let derivative = ((2 * h0 + h1) * m0 - h0 * m1) / (h0 + h1);
+        if (Math.sign(derivative) !== Math.sign(m0)) {
+          derivative = 0;
+        } else if (Math.sign(m0) !== Math.sign(m1) && Math.abs(derivative) > 3 * Math.abs(m0)) {
+          derivative = 3 * m0;
+        }
+        return derivative;
+      }
+
+      function pchipInterpolate(x, y, query) {
+        const n = x.length;
+        if (n < 2 || query < x[0] || query > x[n - 1]) return Number.NaN;
+
+        const h = new Array(n - 1);
+        const slope = new Array(n - 1);
+        for (let i = 0; i < n - 1; i += 1) {
+          h[i] = x[i + 1] - x[i];
+          if (!(h[i] > 0)) return Number.NaN;
+          slope[i] = (y[i + 1] - y[i]) / h[i];
+        }
+
+        const derivative = new Array(n);
+        if (n === 2) {
+          derivative[0] = slope[0];
+          derivative[1] = slope[0];
+        } else {
+          derivative[0] = pchipEdgeDerivative(h[0], h[1], slope[0], slope[1]);
+          derivative[n - 1] = pchipEdgeDerivative(h[n - 2], h[n - 3], slope[n - 2], slope[n - 3]);
+
+          for (let i = 1; i < n - 1; i += 1) {
+            const leftSlope = slope[i - 1];
+            const rightSlope = slope[i];
+            if (leftSlope === 0 || rightSlope === 0 || Math.sign(leftSlope) !== Math.sign(rightSlope)) {
+              derivative[i] = 0;
+            } else {
+              const w1 = 2 * h[i] + h[i - 1];
+              const w2 = h[i] + 2 * h[i - 1];
+              const weightedHarmonicMean = (w1 / leftSlope + w2 / rightSlope) / (w1 + w2);
+              derivative[i] = 1.0 / weightedHarmonicMean;
+            }
+          }
+        }
+
+        let low = 0;
+        let high = n - 1;
+        while (high - low > 1) {
+          const middle = Math.floor((low + high) / 2);
+          if (x[middle] <= query) low = middle;
+          else high = middle;
+        }
+        const interval = query === x[n - 1] ? n - 2 : low;
+        const intervalWidth = h[interval];
+        const localX = query - x[interval];
+        const segmentSlope = slope[interval];
+        const t = (derivative[interval] + derivative[interval + 1] - 2 * segmentSlope) / intervalWidth;
+        const c0 = t / intervalWidth;
+        const c1 = (segmentSlope - derivative[interval]) / intervalWidth - t;
+        const c2 = derivative[interval];
+        const c3 = y[interval];
+
+        // SciPy's compiled PPoly evaluator accumulates terms from the
+        // constant coefficient upward while building successive powers. The
+        // operation order matters at floating-point rounding boundaries.
+        const coefficients = [c0, c1, c2, c3];
+        let result = 0;
+        let power = 1;
+        for (let degree = 0; degree < coefficients.length; degree += 1) {
+          result = result + coefficients[coefficients.length - degree - 1] * power;
+          if (degree < coefficients.length - 1) power *= localX;
+        }
+        return result;
+      }
+
+      function getDatabase() {
+        return DATABASES[state.databaseName];
+      }
+
+      function getVesselData() {
+        const database = getDatabase();
+        return state.vesselName ? database.vessels[state.vesselName] : null;
+      }
+
+      function getAvailableCharacteristics(vesselData) {
+        if (!vesselData) return [];
+        return vesselData.numericColumns.filter((column) => countFinite(vesselData.columns[column]) > 1);
+      }
+
+      function getRange(values) {
+        const valid = values.filter(isFiniteNumber);
+        if (valid.length < 2) return null;
+        return {
+          minimum: Math.min(...valid),
+          maximum: Math.max(...valid),
+          count: valid.length
+        };
+      }
+
+      function interpolateVessel(vesselData, knownCharacteristic, knownValue) {
+        const columns = vesselData.columns;
+        const validRange = getRange(columns[knownCharacteristic]);
+        if (!validRange) {
+          throw new Error(`Not enough valid data for “${knownCharacteristic}” to perform interpolation.`);
+        }
+        if (knownValue < validRange.minimum || knownValue > validRange.maximum) {
+          const error = new Error(`The value ${formatNumber(knownValue)} is outside the valid range ${formatNumber(validRange.minimum)} – ${formatNumber(validRange.maximum)}.`);
+          error.code = 'OUT_OF_RANGE';
+          throw error;
+        }
+
+        const rowIndices = columns[knownCharacteristic]
+          .map((value, index) => ({ value, index }))
+          .filter((entry) => isFiniteNumber(entry.value))
+          .sort((a, b) => (a.value - b.value) || (a.index - b.index));
+
+        let closestIndex = rowIndices[0].index;
+        let closestDistance = Math.abs(rowIndices[0].value - knownValue);
+        for (const entry of rowIndices) {
+          const distance = Math.abs(entry.value - knownValue);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = entry.index;
+          }
+        }
+
+        // Preserve the original Pandas/NumPy tie selection at the finite set
+        // of exact source-node and midpoint ambiguities affecting text fields.
+        const overrides = vesselData.nearestOverrides?.[knownCharacteristic] || [];
+        let exactOverrideApplied = false;
+        for (const [queryValue, sourceIndex] of overrides) {
+          if (queryValue === knownValue) {
+            closestIndex = sourceIndex;
+            exactOverrideApplied = true;
+            break;
+          }
+        }
+
+        const groupedIndices = [];
+        for (const entry of rowIndices) {
+          const lastGroup = groupedIndices[groupedIndices.length - 1];
+          if (!lastGroup || lastGroup.x !== entry.value) {
+            groupedIndices.push({ x: entry.value, indices: [entry.index] });
+          } else {
+            lastGroup.indices.push(entry.index);
+          }
+        }
+
+        if (groupedIndices.length < 2) {
+          throw new Error(`Not enough unique data points for “${knownCharacteristic}”.`);
+        }
+
+        // Apply the source row selected by Pandas/NumPy for a duplicated
+        // nearest x-group. Exact midpoint/node tie overrides take priority.
+        if (!exactOverrideApplied) {
+          let nearestGroupX = groupedIndices[0].x;
+          let nearestGroupDistance = Math.abs(nearestGroupX - knownValue);
+          for (const group of groupedIndices) {
+            const distance = Math.abs(group.x - knownValue);
+            if (distance < nearestGroupDistance) {
+              nearestGroupDistance = distance;
+              nearestGroupX = group.x;
+            }
+          }
+          const groupOverrides = vesselData.nearestGroupOverrides?.[knownCharacteristic] || [];
+          for (const [groupX, sourceIndex] of groupOverrides) {
+            if (groupX === nearestGroupX) {
+              closestIndex = sourceIndex;
+              break;
+            }
+          }
+        }
+
+        const numericSet = new Set(vesselData.numericColumns);
+        const values = {};
+        const omitted = [];
+
+        for (const column of Object.keys(columns)) {
+          if (column === knownCharacteristic) {
+            values[column] = knownValue;
+            continue;
+          }
+
+          if (numericSet.has(column)) {
+            const x = [];
+            const y = [];
+            for (const group of groupedIndices) {
+              const validValues = group.indices
+                .map((index) => columns[column][index])
+                .filter(isFiniteNumber);
+              if (validValues.length > 0) {
+                x.push(group.x);
+                y.push(validValues.reduce((sum, current) => sum + current, 0) / validValues.length);
+              }
+            }
+
+            if (x.length < 2) {
+              values[column] = INSUFFICIENT;
+              omitted.push(column);
+              continue;
+            }
+
+            const interpolated = pchipInterpolate(x, y, knownValue);
+            if (!Number.isFinite(interpolated)) {
+              values[column] = 'nan';
+              continue;
+            }
+
+            if (INTEGER_COLUMNS.has(column) || column.includes('passengers')) {
+              values[column] = pythonRound(interpolated, 0);
+            } else {
+              values[column] = pythonRound(interpolated, 2);
+            }
+          } else {
+            const nearestValue = columns[column][closestIndex];
+            values[column] = nearestValue === null || nearestValue === undefined
+              ? 'No data available'
+              : nearestValue;
+          }
+        }
+
+        return { values, omitted, closestIndex, validRange };
+      }
+
+      function classifyVessel(name) {
+        const lower = name.toLowerCase();
+        if (lower.includes('sailing')) return 'sail';
+        if (lower.includes('cruise')) return 'cruise';
+        if (lower.includes('ferr')) return 'ferry';
+        if (lower.includes('fishing')) return 'fishing';
+        if (lower.includes('container')) return 'container';
+        if (lower.includes('tanker') || lower.includes('lng') || lower.includes('lpg')) return 'tanker';
+        return 'cargo';
+      }
+
+      function updateShipProfile(resultValues = null) {
+        const vesselData = getVesselData();
+        const database = getDatabase();
+        elements.sourceChip.textContent = `${database.shortName} / ${database.year}`;
+
+        if (!vesselData) {
+          elements.vesselPlaceholder.hidden = false;
+          elements.shipSvg.hidden = true;
+          elements.metaVessel.textContent = 'No vessel selected';
+          elements.metaRows.textContent = '—';
+          elements.metaFields.textContent = '—';
+          return;
+        }
+
+        elements.vesselPlaceholder.hidden = true;
+        elements.shipSvg.hidden = false;
+        elements.metaVessel.textContent = state.vesselName;
+        elements.metaRows.textContent = String(vesselData.rowCount);
+        elements.metaFields.textContent = String(getAvailableCharacteristics(vesselData).length);
+        elements.shipDynamicLayer.innerHTML = icons[classifyVessel(state.vesselName)] || icons.cargo;
+        renderDimensions(resultValues);
+      }
+
+      function findValueByPredicate(values, predicate) {
+        for (const [key, value] of Object.entries(values || {})) {
+          if (value !== INSUFFICIENT && predicate(key, value)) return { key, value };
+        }
+        return null;
+      }
+
+      function renderDimensions(values) {
+        if (!values) {
+          elements.dimensionLayer.innerHTML = '';
+          return;
+        }
+
+        const loa = findValueByPredicate(values, (key, value) => typeof value === 'number' && /loa.*length.*overall/i.test(key) && !/max/i.test(key));
+        const beam = findValueByPredicate(values, (key, value) => typeof value === 'number' && /b_beam/i.test(key) && !/max/i.test(key));
+        const draft = findValueByPredicate(values, (key, value) => typeof value === 'number' && /^t_.*laden/i.test(key) && !/max/i.test(key));
+
+        const labels = [];
+        if (loa) {
+          labels.push(`<line class="svg-line" x1="130" y1="304" x2="770" y2="304"/><line class="svg-line" x1="130" y1="297" x2="130" y2="311"/><line class="svg-line" x1="770" y1="297" x2="770" y2="311"/><text class="svg-label" x="450" y="323" text-anchor="middle">LOA ${escapeHtml(formatNumber(loa.value))} m</text>`);
+        }
+        if (draft) {
+          labels.push(`<line class="svg-line" x1="815" y1="219" x2="815" y2="264"/><line class="svg-line" x1="808" y1="219" x2="822" y2="219"/><line class="svg-line" x1="808" y1="264" x2="822" y2="264"/><text class="svg-label" x="830" y="245">T ${escapeHtml(formatNumber(draft.value))} m</text>`);
+        }
+        if (beam) {
+          labels.push(`<text class="svg-label" x="76" y="206">B ${escapeHtml(formatNumber(beam.value))} m</text>`);
+        }
+        elements.dimensionLayer.innerHTML = labels.join('');
+      }
+
+      function databaseTotals() {
+        let vesselFamilies = 0;
+        let rows = 0;
+        for (const database of Object.values(DATABASES)) {
+          const vessels = Object.values(database.vessels);
+          vesselFamilies += vessels.length;
+          rows += vessels.reduce((sum, vessel) => sum + vessel.rowCount, 0);
+        }
+        return { vesselFamilies, rows, databases: Object.keys(DATABASES).length };
+      }
+
+      function renderDatabaseSwitch() {
+        elements.databaseSwitch.innerHTML = DATABASE_ORDER.map((name) => {
+          const database = DATABASES[name];
+          const pressed = name === state.databaseName;
+          return `<button type="button" class="db-option" data-database="${escapeHtml(name)}" aria-pressed="${pressed}"><span class="db-name">PIANC ${escapeHtml(database.shortName)}</span><span class="db-year">${database.year} reference dataset</span></button>`;
+        }).join('');
+      }
+
+      function populateVessels() {
+        const database = getDatabase();
+        const names = Object.keys(database.vessels);
+        elements.vesselSelect.innerHTML = '<option value="">Select a vessel family…</option>'
+          + names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+        elements.vesselCountHint.textContent = `${names.length} families`;
+        elements.vesselSelect.value = '';
+        state.vesselName = '';
+        state.characteristic = '';
+        state.validRange = null;
+        populateCharacteristics();
+        updateShipProfile();
+      }
+
+      function populateCharacteristics() {
+        const vesselData = getVesselData();
+        const characteristics = getAvailableCharacteristics(vesselData);
+        elements.characteristicSelect.innerHTML = '<option value="">Select a numeric characteristic…</option>'
+          + characteristics.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(humaniseLabel(name))}</option>`).join('');
+        elements.characteristicSelect.disabled = !vesselData;
+        elements.characteristicSelect.value = '';
+        elements.characteristicCountHint.textContent = vesselData ? `${characteristics.length} fields` : '—';
+        elements.knownValue.value = '';
+        elements.knownValue.disabled = true;
+        elements.knownValue.removeAttribute('min');
+        elements.knownValue.removeAttribute('max');
+        elements.rangeCard.hidden = true;
+        elements.inputUnitHint.textContent = 'numeric';
+        state.characteristic = '';
+        state.validRange = null;
+        updateCalculateState();
+      }
+
+      function updateCharacteristicRange() {
+        const vesselData = getVesselData();
+        const characteristic = elements.characteristicSelect.value;
+        state.characteristic = characteristic;
+        elements.knownValue.value = '';
+        clearMessage();
+
+        if (!vesselData || !characteristic) {
+          elements.knownValue.disabled = true;
+          elements.rangeCard.hidden = true;
+          state.validRange = null;
+          updateCalculateState();
+          return;
+        }
+
+        const range = getRange(vesselData.columns[characteristic]);
+        state.validRange = range;
+        elements.knownValue.disabled = false;
+        elements.knownValue.min = String(range.minimum);
+        elements.knownValue.max = String(range.maximum);
+        const unit = extractUnit(characteristic);
+        elements.inputUnitHint.textContent = unit || 'numeric';
+        elements.rangeValue.textContent = `${formatNumber(range.minimum)} – ${formatNumber(range.maximum)}${unit ? ` ${unit}` : ''} · ${range.count} records`;
+        elements.rangeCard.hidden = false;
+        updateCalculateState();
+        elements.knownValue.focus();
+      }
+
+      function updateCalculateState() {
+        const value = Number(elements.knownValue.value);
+        const complete = Boolean(state.databaseName && state.vesselName && state.characteristic)
+          && elements.knownValue.value.trim() !== ''
+          && Number.isFinite(value);
+        elements.calculateButton.disabled = !complete;
+      }
+
+      function showMessage(message, type = 'error') {
+        elements.messageBox.classList.add('visible');
+        elements.messageBox.classList.toggle('warning', type === 'warning');
+        elements.messageIcon.textContent = type === 'warning' ? '△' : '!';
+        elements.messageText.textContent = message;
+      }
+
+      function clearMessage() {
+        elements.messageBox.classList.remove('visible', 'warning');
+        elements.messageText.textContent = '';
+      }
+
+      let toastTimer = null;
+      function showToast(message) {
+        elements.toastText.textContent = message;
+        elements.toast.classList.add('visible');
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => elements.toast.classList.remove('visible'), 2300);
+      }
+
+      function categoryForColumn(column) {
+        const lower = column.toLowerCase();
+        if (lower.includes('class_name')) return 'Classification';
+        if (lower.includes('windage') || lower.includes('air_draft')) return 'Windage & air draft';
+        if (lower.includes('coefficient') || lower.startsWith('cb_')) return 'Hydrostatic coefficient';
+        if (lower.includes('loa') || lower.includes('lbp') || lower.includes('beam') || lower.startsWith('t_') || lower.includes('moulded_depth')) return 'Principal dimensions';
+        if (lower.includes('capacity') || lower.includes('dwt') || lower === 'gt' || lower.startsWith('dm_') || lower.includes('displacement')) return 'Tonnage & capacity';
+        return 'Other characteristics';
+      }
+
+      function makePlainTextOutput(values, knownValue) {
+        const header = `\n--- '${state.vesselName}' with ${state.characteristic} = ${knownValue} (based on ${state.databaseName} database) ---\n`;
+        const lines = [];
+        for (const [characteristic, value] of Object.entries(values)) {
+          if (value !== INSUFFICIENT) {
+            lines.push(`  - ${characteristic.padEnd(45, ' ')}: ${formatPlainValue(value)}`);
+          }
+        }
+        const footer = '----------------------------------------------------------------------------------------------------------------\n';
+        return header + lines.join('\n') + '\n' + footer;
+      }
+
+      function pickSummary(values) {
+        const candidates = [
+          {
+            label: 'Length overall',
+            predicate: (key, value) => typeof value === 'number' && /loa.*length.*overall/i.test(key) && !/max/i.test(key)
+          },
+          {
+            label: 'Beam',
+            predicate: (key, value) => typeof value === 'number' && /b_beam/i.test(key) && !/max/i.test(key)
+          },
+          {
+            label: 'Laden draft',
+            predicate: (key, value) => typeof value === 'number' && /^t_.*laden/i.test(key) && !/max/i.test(key)
+          },
+          {
+            label: 'Reference tonnage',
+            predicate: (key, value) => typeof value === 'number' && (/dwt/i.test(key) || /^gt$/i.test(key) || /dm_maximum_mass_displacement/i.test(key))
+          }
+        ];
+
+        return candidates.map((candidate) => {
+          const match = findValueByPredicate(values, candidate.predicate);
+          return match ? { ...candidate, ...match } : null;
+        }).filter(Boolean);
+      }
+
+      function renderSummary(values) {
+        const summary = pickSummary(values);
+        elements.summaryGrid.innerHTML = summary.map((item) => {
+          const unit = extractUnit(item.key);
+          return `<div class="summary-card"><span class="summary-label">${escapeHtml(item.label)}</span><span class="summary-value">${escapeHtml(formatNumber(item.value))}${unit ? `<span class="summary-unit">${escapeHtml(unit)}</span>` : ''}</span></div>`;
+        }).join('');
+      }
+
+      function renderResultGroups(values) {
+        const grouped = new Map();
+        for (const [column, value] of Object.entries(values)) {
+          if (value === INSUFFICIENT) continue;
+          const category = categoryForColumn(column);
+          if (!grouped.has(category)) grouped.set(category, []);
+          grouped.get(category).push({ column, value });
+        }
+
+        elements.resultGroups.innerHTML = Array.from(grouped.entries()).map(([category, entries], groupIndex) => {
+          const items = entries.map(({ column, value }) => {
+            const inputClass = column === state.characteristic ? ' input-source' : '';
+            const textualClass = typeof value === 'string' && value !== 'nan' ? ' textual' : '';
+            const displayValue = typeof value === 'number' ? formatNumber(value) : (value === 'nan' ? 'Not available at this input' : value);
+            const searchable = `${column} ${humaniseLabel(column)} ${displayValue}`.toLowerCase();
+            return `<div class="result-item${inputClass}" data-search="${escapeHtml(searchable)}"><div class="result-label">${escapeHtml(humaniseLabel(column))}${column === state.characteristic ? '<span class="input-flag">Input</span>' : ''}</div><div class="result-value${textualClass}">${escapeHtml(displayValue)}</div></div>`;
+          }).join('');
+
+          return `<section class="result-group"><button class="group-toggle" type="button" aria-expanded="true" data-group-index="${groupIndex}"><span class="group-name">${escapeHtml(category)} <span class="group-count">${entries.length}</span></span><span class="chevron" aria-hidden="true"></span></button><div class="result-grid">${items}</div></section>`;
+        }).join('');
+      }
+
+      function renderResults(interpolation, knownValue) {
+        const values = interpolation.values;
+        const database = getDatabase();
+        state.calculationNumber += 1;
+        state.result = {
+          values,
+          text: makePlainTextOutput(values, knownValue),
+          database: state.databaseName,
+          vessel: state.vesselName,
+          characteristic: state.characteristic,
+          knownValue
+        };
+        state.sessionLog.push(state.result.text);
+
+        elements.resultKicker.textContent = `Interpolation result · calculation ${state.calculationNumber}`;
+        elements.resultsTitle.textContent = state.vesselName;
+        elements.resultsSubtitle.textContent = `${state.characteristic} = ${formatNumber(knownValue)} · ${state.databaseName} · PCHIP interpolation within the source range.`;
+
+        const classValue = values.Class_name;
+        if (classValue && classValue !== INSUFFICIENT && classValue !== 'No data available') {
+          elements.classBadge.textContent = classValue;
+          elements.classBadge.hidden = false;
+        } else {
+          elements.classBadge.hidden = true;
+        }
+
+        renderSummary(values);
+        renderResultGroups(values);
+        elements.rawOutput.textContent = state.result.text;
+        elements.resultSearch.value = '';
+        elements.noFilterResults.classList.remove('visible');
+        elements.emptyPanel.hidden = true;
+        elements.resultsPanel.hidden = false;
+        elements.logBadge.textContent = `${state.sessionLog.length} calculation${state.sessionLog.length === 1 ? '' : 's'}`;
+        updateShipProfile(values);
+
+        window.requestAnimationFrame(() => {
+          elements.resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+
+      function calculate() {
+        clearMessage();
+        const vesselData = getVesselData();
+        const valueText = elements.knownValue.value.trim();
+        const knownValue = Number(valueText);
+
+        if (!vesselData || !state.characteristic || valueText === '') {
+          showMessage('Select a vessel family, a known characteristic and a numeric value.');
+          return;
+        }
+        if (!Number.isFinite(knownValue)) {
+          showMessage('Enter a valid numeric value.');
+          return;
+        }
+
+        try {
+          const interpolation = interpolateVessel(vesselData, state.characteristic, knownValue);
+          renderResults(interpolation, knownValue);
+          showToast('Vessel characteristics calculated.');
+        } catch (error) {
+          showMessage(error.message, error.code === 'OUT_OF_RANGE' ? 'warning' : 'error');
+        }
+      }
+
+      function resetAll() {
+        state.databaseName = DATABASE_ORDER[0];
+        state.result = null;
+        renderDatabaseSwitch();
+        populateVessels();
+        elements.resultsPanel.hidden = true;
+        elements.emptyPanel.hidden = false;
+        elements.resultSearch.value = '';
+        clearMessage();
+        showToast('Inputs reset.');
+      }
+
+      function filterResults() {
+        const query = elements.resultSearch.value.trim().toLowerCase();
+        const items = Array.from(elements.resultGroups.querySelectorAll('.result-item'));
+        let visibleCount = 0;
+        for (const item of items) {
+          const visible = !query || item.dataset.search.includes(query);
+          item.classList.toggle('filtered-out', !visible);
+          if (visible) visibleCount += 1;
+        }
+
+        for (const group of elements.resultGroups.querySelectorAll('.result-group')) {
+          const groupVisible = group.querySelectorAll('.result-item:not(.filtered-out)').length > 0;
+          group.style.display = groupVisible ? '' : 'none';
+        }
+        elements.noFilterResults.classList.toggle('visible', visibleCount === 0);
+      }
+
+      async function copyCurrentResult() {
+        if (!state.result) return;
+        try {
+          await navigator.clipboard.writeText(state.result.text);
+          showToast('Current result copied to the clipboard.');
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = state.result.text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+          showToast('Current result copied to the clipboard.');
+        }
+      }
+
+      function downloadSessionLog() {
+        if (state.sessionLog.length === 0) return;
+        const blob = new Blob([state.sessionLog.join('')], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = 'pianc-ship-dimensions.txt';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        showToast('Session log downloaded.');
+      }
+
+      function initialize() {
+        const totals = databaseTotals();
+        elements.databaseStats.textContent = `${totals.databases} databases · ${totals.vesselFamilies} vessel families · ${totals.rows} reference rows`;
+        renderDatabaseSwitch();
+        populateVessels();
+        elements.sourceChip.textContent = `${getDatabase().shortName} / ${getDatabase().year}`;
+
+        elements.databaseSwitch.addEventListener('click', (event) => {
+          const button = event.target.closest('[data-database]');
+          if (!button) return;
+          state.databaseName = button.dataset.database;
+          renderDatabaseSwitch();
+          populateVessels();
+          clearMessage();
+        });
+
+        elements.vesselSelect.addEventListener('change', () => {
+          state.vesselName = elements.vesselSelect.value;
+          populateCharacteristics();
+          updateShipProfile();
+          clearMessage();
+        });
+
+        elements.characteristicSelect.addEventListener('change', updateCharacteristicRange);
+        elements.knownValue.addEventListener('input', () => {
+          clearMessage();
+          updateCalculateState();
+        });
+        elements.knownValue.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' && !elements.calculateButton.disabled) calculate();
+        });
+
+        elements.midpointButton.addEventListener('click', () => {
+          if (!state.validRange) return;
+          elements.knownValue.value = String((state.validRange.minimum + state.validRange.maximum) / 2);
+          updateCalculateState();
+          elements.knownValue.focus();
+        });
+
+        elements.calculateButton.addEventListener('click', calculate);
+        elements.resetButton.addEventListener('click', resetAll);
+        elements.resultSearch.addEventListener('input', filterResults);
+        elements.copyButton.addEventListener('click', copyCurrentResult);
+        elements.downloadButton.addEventListener('click', downloadSessionLog);
+        elements.printButton.addEventListener('click', () => window.print());
+
+        elements.resultGroups.addEventListener('click', (event) => {
+          const toggle = event.target.closest('.group-toggle');
+          if (!toggle) return;
+          const grid = toggle.nextElementSibling;
+          const expanded = toggle.getAttribute('aria-expanded') === 'true';
+          toggle.setAttribute('aria-expanded', String(!expanded));
+          grid.classList.toggle('collapsed', expanded);
+        });
+      }
+
+      initialize();
+
+      // Expose a small, read-only test surface without requiring any library.
+      Object.defineProperty(window, 'PIANCVesselCalculator', {
+        value: Object.freeze({
+          pchipInterpolate,
+          pythonRound,
+          interpolateVessel,
+          databases: DATABASES
+        }),
+        writable: false,
+        configurable: false
+      });
+    })();
+  </script>
+</body>
+</html>
